@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Simulador e demonstrativo de cálculo da Multa Compensatória prevista na Lei Complementar nº 429/2023 de Itajaí.">
+  <title>Multa Compensatória — Itajaí</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
+
+  <header class="app-header no-print">
+    <div class="app-shell header-inner">
+      <div class="brand">
+        <img class="brand-image" src="cabecalho.png" alt="Município de Itajaí" onerror="this.hidden=true">
+        <div class="brand-copy">
+          <span class="brand-kicker">Município de Itajaí</span>
+          <strong>Multa Compensatória</strong>
+          <span>Regularização de edificações — LC nº 429/2023</span>
+        </div>
+      </div>
+      <div class="header-meta">
+        <span class="status-chip">UFM 2026: <strong>R$ 252,59</strong></span>
+        <span class="version-chip">v2.0.0</span>
+      </div>
+    </div>
+  </header>
+
+  <main id="conteudo" class="app-shell page-layout">
+    <section class="hero no-print" aria-labelledby="titulo-principal">
+      <div>
+        <p class="eyebrow">Ferramenta de apoio ao cálculo</p>
+        <h1 id="titulo-principal">Simulador de Multa Compensatória</h1>
+        <p class="hero-text">Informe os dados do imóvel, selecione os parâmetros aplicáveis e identifique as áreas de irregularidade. A ferramenta apresenta a memória completa do cálculo e um demonstrativo pronto para impressão.</p>
+      </div>
+      <div class="hero-alert" role="note">
+        <span class="hero-alert-icon" aria-hidden="true">i</span>
+        <div>
+          <strong>Importante</strong>
+          <p>No modo <b>Simulação</b>, o resultado é apenas orientativo. O valor definitivo depende da análise dos documentos, projetos e vistorias no processo administrativo.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="mode-panel no-print" aria-labelledby="modo-titulo">
+      <div>
+        <span class="section-mini-label">Tipo de documento</span>
+        <h2 id="modo-titulo">Como este cálculo será utilizado?</h2>
+      </div>
+      <div class="segmented-control" role="radiogroup" aria-label="Tipo de documento">
+        <label>
+          <input type="radio" name="modoDocumento" value="simulacao" checked>
+          <span><b>Simulação orientativa</b><small>Consulta sem caráter oficial</small></span>
+        </label>
+        <label>
+          <input type="radio" name="modoDocumento" value="administrativo">
+          <span><b>Demonstrativo administrativo</b><small>Para instrução de processo</small></span>
+        </label>
+      </div>
+    </section>
+
+    <nav class="stepper no-print" aria-label="Etapas do preenchimento">
+      <a href="#etapa-imovel"><span>1</span>Imóvel</a>
+      <a href="#etapa-fatores"><span>2</span>Edificação</a>
+      <a href="#etapa-irregularidades"><span>3</span>Irregularidades</a>
+      <a href="#etapa-conferencia"><span>4</span>Conferência</a>
+    </nav>
+
+    <form id="calculadora-form" novalidate>
+      <section id="etapa-imovel" class="form-card no-print" aria-labelledby="imovel-titulo">
+        <div class="card-heading">
+          <div class="step-number">1</div>
+          <div>
+            <span class="section-mini-label">Identificação</span>
+            <h2 id="imovel-titulo">Dados do imóvel</h2>
+            <p>Comece pela inscrição imobiliária reduzida. O setor, a quadra e a face serão utilizados para localizar a zona fiscal.</p>
+          </div>
+        </div>
+
+        <div class="field-grid two-columns">
+          <div class="field-group field-group-wide">
+            <label for="inscricao-imobiliaria">Inscrição imobiliária <span class="required">*</span></label>
+            <div class="input-with-action">
+              <input id="inscricao-imobiliaria" name="inscricaoImobiliaria" type="text" inputmode="numeric" autocomplete="off" maxlength="15" placeholder="000.000.00.0000" aria-describedby="inscricao-ajuda inscricao-status" required>
+              <button id="buscar-zona" class="button secondary" type="button">Buscar imóvel</button>
+            </div>
+            <p id="inscricao-ajuda" class="field-help">Formato: setor.quadra.face.lote. Exemplo: 214.080.01.0001.</p>
+            <p id="inscricao-status" class="field-status" aria-live="polite"></p>
+          </div>
+
+          <div class="field-group">
+            <label for="data-calculo">Data do cálculo</label>
+            <input id="data-calculo" name="dataCalculo" type="date">
+          </div>
+        </div>
+
+        <div id="zona-card" class="lookup-card" hidden aria-live="polite">
+          <div class="lookup-icon" aria-hidden="true">✓</div>
+          <div class="lookup-main">
+            <span class="lookup-label">Imóvel localizado</span>
+            <strong id="zona-logradouro">—</strong>
+            <span id="zona-bairro">—</span>
+          </div>
+          <div class="lookup-data">
+            <span>Zona fiscal</span>
+            <strong id="zona-identificacao">—</strong>
+          </div>
+          <div class="lookup-data">
+            <span>Fator de localização</span>
+            <strong id="zona-fator">—</strong>
+          </div>
+        </div>
+
+        <details id="localizacao-manual" class="details-box">
+          <summary>A localização não foi encontrada ou precisa ser ajustada</summary>
+          <div class="details-content">
+            <p>Use esta opção somente quando a consulta automática não estiver disponível ou quando houver justificativa para ajuste manual.</p>
+            <div class="field-grid three-columns">
+              <div class="field-group">
+                <label for="zona-manual">Zona fiscal</label>
+                <select id="zona-manual">
+                  <option value="">Selecione após carregar a tabela</option>
+                </select>
+              </div>
+              <div class="field-group">
+                <label for="logradouro-manual">Logradouro</label>
+                <input id="logradouro-manual" type="text" placeholder="Nome do logradouro">
+              </div>
+              <div class="field-group">
+                <label for="bairro-manual">Bairro</label>
+                <input id="bairro-manual" type="text" placeholder="Nome do bairro">
+              </div>
+            </div>
+            <div id="fallback-fator-wrap" class="field-grid two-columns" hidden>
+              <div class="field-group">
+                <label for="zona-numero-manual">Número/nome da zona</label>
+                <input id="zona-numero-manual" type="text" placeholder="Ex.: Zona 7 — Magenta">
+              </div>
+              <div class="field-group">
+                <label for="fator-fl-manual">Fator de localização — FL</label>
+                <input id="fator-fl-manual" type="text" inputmode="decimal" placeholder="Ex.: 8,75301">
+              </div>
+            </div>
+            <div class="inline-actions">
+              <button id="aplicar-localizacao-manual" class="button secondary" type="button">Aplicar localização manual</button>
+              <label class="button ghost file-button" for="arquivo-zonas">Carregar tabela de zonas</label>
+              <input id="arquivo-zonas" type="file" accept=".txt,text/plain" hidden>
+            </div>
+          </div>
+        </details>
+
+        <div id="campos-administrativos" class="administrative-fields" hidden>
+          <div class="subsection-heading">
+            <h3>Identificação administrativa</h3>
+            <p>Estes dados constarão apenas no demonstrativo administrativo.</p>
+          </div>
+          <div class="field-grid two-columns">
+            <div class="field-group">
+              <label for="processo">Processo administrativo</label>
+              <input id="processo" type="text" placeholder="Ex.: 0000-26-ITJ-REG">
+            </div>
+            <div class="field-group">
+              <label for="interessado">Interessado</label>
+              <input id="interessado" type="text" placeholder="Nome ou razão social">
+            </div>
+            <div class="field-group">
+              <label for="responsavel">Responsável pela elaboração</label>
+              <input id="responsavel" type="text" placeholder="Servidor, comissão ou unidade">
+            </div>
+            <div class="field-group">
+              <label for="unidade">Unidade administrativa</label>
+              <input id="unidade" type="text" value="Secretaria Municipal de Desenvolvimento Urbano e Habitação">
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="etapa-fatores" class="form-card no-print" aria-labelledby="fatores-titulo">
+        <div class="card-heading">
+          <div class="step-number">2</div>
+          <div>
+            <span class="section-mini-label">Parâmetros</span>
+            <h2 id="fatores-titulo">Características da edificação e do terreno</h2>
+            <p>Selecione o critério que melhor representa a situação analisada. O multiplicador aplicado aparece ao lado de cada campo.</p>
+          </div>
+        </div>
+
+        <div class="factor-section">
+          <div class="subsection-heading">
+            <h3>Valor e características da construção</h3>
+          </div>
+          <div class="field-grid two-columns">
+            <div class="factor-field">
+              <div class="factor-label-row">
+                <label for="fator-vmq">Valor do m² da construção — VMQ <span class="required">*</span></label>
+                <button class="help-button" type="button" data-help="vmq" aria-label="Ajuda sobre o valor do metro quadrado da construção">?</button>
+              </div>
+              <select id="fator-vmq" required></select>
+              <div class="factor-footer"><span>Referência por tipo construtivo</span><output id="badge-vmq">VMQ = —</output></div>
+            </div>
+
+            <div class="factor-field">
+              <div class="factor-label-row">
+                <label for="fator-fi">Condição/idade — FI <span class="required">*</span></label>
+                <button class="help-button" type="button" data-help="fi" aria-label="Ajuda sobre condição e idade da edificação">?</button>
+              </div>
+              <select id="fator-fi" required></select>
+              <div class="factor-footer"><span>Considere a idade comprovada</span><output id="badge-fi">FI = —</output></div>
+            </div>
+
+            <div class="factor-field">
+              <div class="factor-label-row">
+                <label for="fator-fa">Padrão de acabamento — FA <span class="required">*</span></label>
+                <button class="help-button" type="button" data-help="fa" aria-label="Ajuda sobre o padrão de acabamento">?</button>
+              </div>
+              <select id="fator-fa" required></select>
+              <div class="factor-footer"><span>Padrão construtivo predominante</span><output id="badge-fa">FA = —</output></div>
+            </div>
+
+            <div class="factor-field">
+              <div class="factor-label-row">
+                <label for="fator-fu">Tipo e uso da edificação — FU <span class="required">*</span></label>
+                <button class="help-button" type="button" data-help="fu" aria-label="Ajuda sobre o tipo e uso da edificação">?</button>
+              </div>
+              <select id="fator-fu" required></select>
+              <div class="factor-footer"><span>Uso e fração ideal da unidade</span><output id="badge-fu">FU = —</output></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="factor-section">
+          <div class="subsection-heading">
+            <h3>Terreno e entorno urbano</h3>
+          </div>
+          <div class="field-grid two-columns">
+            <div class="factor-field">
+              <div class="factor-label-row">
+                <label for="fator-ft">Topografia — FT <span class="required">*</span></label>
+                <button class="help-button" type="button" data-help="ft" aria-label="Ajuda sobre topografia">?</button>
+              </div>
+              <select id="fator-ft" required></select>
+              <div class="factor-footer"><span>Condição predominante do terreno</span><output id="badge-ft">FT = —</output></div>
+            </div>
+
+            <div class="factor-field">
+              <div class="factor-label-row">
+                <label for="fator-fv">Largura da via — FV <span class="required">*</span></label>
+                <button class="help-button" type="button" data-help="fv" aria-label="Ajuda sobre largura da via">?</button>
+              </div>
+              <select id="fator-fv" required></select>
+              <div class="factor-footer"><span>Via pública que dá acesso ao lote</span><output id="badge-fv">FV = —</output></div>
+            </div>
+
+            <div class="factor-field">
+              <div class="factor-label-row">
+                <label for="fator-fs">Situação do lote — FS <span class="required">*</span></label>
+                <button class="help-button" type="button" data-help="fs" aria-label="Ajuda sobre situação do lote">?</button>
+              </div>
+              <select id="fator-fs" required></select>
+              <div class="factor-footer"><span>Posição e acesso do lote</span><output id="badge-fs">FS = —</output></div>
+            </div>
+
+            <div class="factor-field location-factor-readonly">
+              <div class="factor-label-row">
+                <span class="label-like">Localização — FL</span>
+                <button class="help-button" type="button" data-help="fl" aria-label="Ajuda sobre fator de localização">?</button>
+              </div>
+              <div class="readonly-value" id="fator-fl-display">Informe a inscrição imobiliária</div>
+              <div class="factor-footer"><span>Obtido pela zona fiscal</span><output id="badge-fl">FL = —</output></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="etapa-irregularidades" class="form-card no-print" aria-labelledby="irregularidades-titulo">
+        <div class="card-heading">
+          <div class="step-number">3</div>
+          <div>
+            <span class="section-mini-label">Incidências</span>
+            <h2 id="irregularidades-titulo">Áreas de irregularidade</h2>
+            <p>Marque apenas as irregularidades existentes. Para cada item, informe a área correspondente em metros quadrados.</p>
+          </div>
+        </div>
+
+        <div id="irregularidades-lista" class="irregularity-list"></div>
+
+        <div class="info-note">
+          <span aria-hidden="true">i</span>
+          <p>Para vagas de garagem faltantes, a calculadora considera <strong>15,00 m² por vaga</strong>. É possível informar diretamente a área ou usar o conversor de quantidade de vagas.</p>
+        </div>
+      </section>
+
+      <section id="etapa-conferencia" class="form-card no-print" aria-labelledby="conferencia-titulo">
+        <div class="card-heading">
+          <div class="step-number">4</div>
+          <div>
+            <span class="section-mini-label">Revisão</span>
+            <h2 id="conferencia-titulo">Conferência dos dados</h2>
+            <p>Revise o resumo antes de calcular. Campos pendentes serão destacados.</p>
+          </div>
+        </div>
+
+        <div class="review-grid">
+          <div class="review-block">
+            <span>Imóvel</span>
+            <strong id="review-imovel">Não informado</strong>
+            <small id="review-localizacao">Localização não definida</small>
+          </div>
+          <div class="review-block">
+            <span>Fatores preenchidos</span>
+            <strong id="review-fatores">0 de 8</strong>
+            <small id="review-bmc-preview">Base ainda não calculável</small>
+          </div>
+          <div class="review-block">
+            <span>Irregularidades</span>
+            <strong id="review-irregularidades">Nenhuma selecionada</strong>
+            <small id="review-area">Área ponderada: 0,00 m²</small>
+          </div>
+        </div>
+
+        <div class="field-group observations-field">
+          <label for="observacoes">Observações do cálculo</label>
+          <textarea id="observacoes" rows="4" placeholder="Registre esclarecimentos, critérios específicos ou informações relevantes para o demonstrativo."></textarea>
+        </div>
+
+        <div id="erro" class="error-box" role="alert" hidden></div>
+
+        <div class="form-actions">
+          <button id="calcular" class="button primary large" type="submit">Calcular multa compensatória</button>
+          <button id="limpar" class="button ghost" type="button">Limpar formulário</button>
+        </div>
+      </section>
+    </form>
+
+    <section id="resultado" class="result-section no-print" hidden aria-labelledby="resultado-titulo">
+      <div class="result-hero">
+        <div>
+          <span id="resultado-selo" class="document-badge">SIMULAÇÃO</span>
+          <p>Valor estimado da multa compensatória</p>
+          <h2 id="resultado-titulo">R$ 0,00</h2>
+          <span id="resultado-subtitulo">Cálculo realizado com a UFM de 2026.</span>
+        </div>
+        <div class="result-actions">
+          <button id="imprimir" class="button primary" type="button">Imprimir / salvar PDF</button>
+          <button id="editar-calculo" class="button secondary" type="button">Voltar ao formulário</button>
+        </div>
+      </div>
+
+      <div class="summary-cards">
+        <article>
+          <span>Base da multa — BMC</span>
+          <strong id="resultado-bmc">R$ 0,00/m²</strong>
+          <small>Produto da UFM pelos fatores aplicáveis</small>
+        </article>
+        <article>
+          <span>Área ponderada total</span>
+          <strong id="resultado-area-ponderada">0,00 m²</strong>
+          <small>Soma das áreas após os percentuais</small>
+        </article>
+        <article>
+          <span>Irregularidades consideradas</span>
+          <strong id="resultado-quantidade">0</strong>
+          <small>Itens com área superior a zero</small>
+        </article>
+      </div>
+
+      <div class="result-card">
+        <div class="result-card-heading">
+          <div>
+            <span class="section-mini-label">Composição</span>
+            <h3>Valores por irregularidade</h3>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Irregularidade</th>
+                <th class="numeric">Área</th>
+                <th class="numeric">Percentual</th>
+                <th class="numeric">Área ponderada</th>
+                <th class="numeric">Valor parcial</th>
+              </tr>
+            </thead>
+            <tbody id="resultado-irregularidades-corpo"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <details class="result-card formula-details">
+        <summary>Exibir memória matemática completa</summary>
+        <div class="formula-content">
+          <div>
+            <span>Base da multa compensatória</span>
+            <code id="formula-bmc">BMC = —</code>
+          </div>
+          <div>
+            <span>Valor da multa compensatória</span>
+            <code id="formula-vmc">VMC = —</code>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <section id="historico-calculos" class="history-section no-print" hidden aria-labelledby="historico-titulo">
+      <div class="history-heading">
+        <div>
+          <span class="section-mini-label">Neste navegador</span>
+          <h2 id="historico-titulo">Últimos cálculos</h2>
+          <p>O histórico fica salvo somente neste dispositivo e não é enviado a nenhum servidor.</p>
+        </div>
+        <button id="limpar-historico" class="button ghost" type="button">Apagar histórico</button>
+      </div>
+      <div id="historico-lista" class="history-list"></div>
+    </section>
+
+    <footer class="app-footer no-print">
+      <p><strong>Referências:</strong> Lei Complementar nº 429/2023; Lei Complementar nº 20/2002; Decreto nº 13.857/2025.</p>
+      <p>Versão 2.0.0 — parâmetros de 2026.</p>
+    </footer>
+  </main>
+
+  <section id="print-document" class="print-document" aria-hidden="true">
+    <header class="print-header">
+      <div class="print-brand">
+        <img src="cabecalho.png" alt="Município de Itajaí" onerror="this.hidden=true">
+        <div>
+          <strong>MUNICÍPIO DE ITAJAÍ</strong>
+          <span>Secretaria Municipal de Desenvolvimento Urbano e Habitação</span>
+        </div>
+      </div>
+      <div class="print-title-block">
+        <span id="print-badge">SIMULAÇÃO</span>
+        <h1>Demonstrativo de Cálculo da Multa Compensatória</h1>
+        <p>Lei Complementar nº 429/2023</p>
+      </div>
+    </header>
+
+    <section class="print-section">
+      <h2>1. Identificação</h2>
+      <div id="print-identificacao" class="print-info-grid"></div>
+    </section>
+
+    <section class="print-section">
+      <h2>2. Fatores utilizados</h2>
+      <table class="print-table">
+        <thead><tr><th>Fator</th><th>Critério selecionado</th><th class="numeric">Multiplicador</th></tr></thead>
+        <tbody id="print-fatores-corpo"></tbody>
+      </table>
+    </section>
+
+    <section class="print-section">
+      <h2>3. Irregularidades consideradas</h2>
+      <table class="print-table">
+        <thead><tr><th>Irregularidade</th><th class="numeric">Área</th><th class="numeric">Percentual</th><th class="numeric">Área ponderada</th><th class="numeric">Valor parcial</th></tr></thead>
+        <tbody id="print-irregularidades-corpo"></tbody>
+      </table>
+    </section>
+
+    <section class="print-section print-financial-summary">
+      <h2>4. Síntese do cálculo</h2>
+      <div class="print-summary-grid">
+        <div><span>Base da multa — BMC</span><strong id="print-bmc">—</strong></div>
+        <div><span>Área ponderada total</span><strong id="print-area">—</strong></div>
+        <div class="print-total"><span>Valor da multa compensatória</span><strong id="print-total">—</strong></div>
+      </div>
+      <div class="print-formulas">
+        <p><strong>Fórmula da BMC:</strong> <span id="print-formula-bmc">—</span></p>
+        <p><strong>Fórmula da VMC:</strong> <span id="print-formula-vmc">—</span></p>
+      </div>
+    </section>
+
+    <section id="print-observacoes-section" class="print-section">
+      <h2>5. Observações</h2>
+      <p id="print-observacoes">—</p>
+    </section>
+
+    <section class="print-section print-notes">
+      <h2>6. Notas e referências</h2>
+      <p id="print-nota-natureza"></p>
+      <p>A UFM utilizada é de <strong>R$ 252,59</strong>, vigente para o exercício de 2026, conforme Decreto nº 13.857, de 13 de novembro de 2025.</p>
+      <p>Os fatores de avaliação utilizados pela ferramenta têm referência nos parâmetros cadastrais e tributários da Lei Complementar nº 20/2002. A fórmula e os percentuais das irregularidades seguem a Lei Complementar nº 429/2023.</p>
+    </section>
+
+    <footer class="print-footer">
+      <span>Calculadora de Multa Compensatória — versão 2.0.0</span>
+      <span id="print-emissao">Emitido em —</span>
+    </footer>
+  </section>
+
+  <dialog id="help-dialog" class="help-dialog">
+    <form method="dialog">
+      <button class="dialog-close" aria-label="Fechar ajuda">×</button>
+      <span class="section-mini-label">Ajuda para preenchimento</span>
+      <h2 id="help-title">—</h2>
+      <div id="help-content"></div>
+      <button class="button secondary dialog-ok" value="close">Entendi</button>
+    </form>
+  </dialog>
+
+  <script src="script.js" defer></script>
+</body>
+</html>

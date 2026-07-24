@@ -1,0 +1,4 @@
+Planta de Valores Genéricos de Metro Quadrado de Terreno
+| Setor | Quadra | Face | Descrição Logradouro | Descrição Bairro | Zona | Cor | Fator de localização |
+| 214 | 80 | 2 | OSVALDO REIS - AVENIDA | BALNEARIO SANTA CLARA | 7 | Magenta | 8,75301 |
+| 216 | 23 | 2 | ROSALIA PEDRONI | ITAIPAVA | 1 | Azul | 1,64119 |
