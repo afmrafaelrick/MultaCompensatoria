@@ -395,7 +395,7 @@ input[aria-invalid="true"], select[aria-invalid="true"] { border-color: var(--re
 .percentage-chip { padding: 5px 9px; border-radius: 999px; background: var(--surface-alt); border: 1px solid var(--line-200); font-size: .74rem; font-weight: 800; color: var(--navy-800); }
 .irregularity-inputs {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(180px, .6fr) minmax(180px, .6fr);
+  grid-template-columns: minmax(0, 1fr) minmax(260px, .8fr);
   gap: 14px;
   padding: 0 16px 16px 49px;
 }
@@ -503,7 +503,6 @@ td { font-size: .83rem; }
   .lookup-data:last-child { grid-column: 2 / -1; border-left: 0; border-top: 1px solid #b9dbc7; padding: 10px 0 0; }
   .review-grid, .summary-cards { grid-template-columns: 1fr; }
   .irregularity-inputs { grid-template-columns: 1fr 1fr; }
-  .irregularity-inputs > :first-child { grid-column: 1 / -1; }
   .result-hero { align-items: flex-start; flex-direction: column; }
   .result-actions { justify-content: flex-start; }
 }
