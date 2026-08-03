@@ -7,10 +7,30 @@
     decretoUfm: 'Decreto nº 13.857, de 13 de novembro de 2025',
     leiMulta: 'Lei Complementar nº 429/2023',
     leiFatores: 'Lei Complementar nº 20/2002',
-    versao: '2.0.0',
+    versao: '2.2.0',
     arquivoZonas: './zonasfiscais.txt',
-    areaPorVaga: 15
+    areaPorVaga: 15,
+    historyStorageKey: 'multaCompensatoriaHistoricoV22'
   });
+
+  /*
+   * A coluna de fator existente em zonasfiscais.txt pertence à Planta Genérica
+   * de Valores e NÃO é o Fator de Localização da multa compensatória.
+   * Para a multa, o FL é obtido exclusivamente pela zona fiscal, conforme a
+   * tabela própria abaixo.
+   */
+  const LOCATION_ZONES = Object.freeze([
+    Object.freeze({ zone: 1, color: 'Azul', factor: 1.00 }),
+    Object.freeze({ zone: 2, color: 'Ciano', factor: 1.10 }),
+    Object.freeze({ zone: 3, color: 'Laranja', factor: 1.20 }),
+    Object.freeze({ zone: 4, color: 'Verde', factor: 1.40 }),
+    Object.freeze({ zone: 5, color: 'Vermelho', factor: 1.70 }),
+    Object.freeze({ zone: 6, color: 'Cinza', factor: 2.00 }),
+    Object.freeze({ zone: 7, color: 'Magenta', factor: 2.50 }),
+    Object.freeze({ zone: 8, color: 'Preto', factor: 3.30 }),
+    Object.freeze({ zone: 9, color: 'Marrom', factor: 4.00 }),
+    Object.freeze({ zone: 10, color: 'Bege', factor: 5.00 })
+  ]);
 
   const FACTOR_DEFINITIONS = Object.freeze({
     vmq: {
@@ -116,35 +136,35 @@
       title: 'Área correspondente aos pavimentos excedentes',
       shortTitle: 'Pavimentos excedentes',
       description: 'Informe a área construída situada nos pavimentos que excedem o limite aplicável.',
-      rate: 0.40
+      propertyValuePercentage: 0.40
     },
     {
       key: 'areaExtrapolaCA',
       title: 'Área excedente ao coeficiente de aproveitamento',
       shortTitle: 'Coeficiente de aproveitamento excedente',
       description: 'Informe somente a parcela da área computável que excede o coeficiente permitido.',
-      rate: 0.10
+      propertyValuePercentage: 0.10
     },
     {
       key: 'areaRecuoFrontal',
       title: 'Área edificada sobre o recuo frontal',
       shortTitle: 'Ocupação do recuo frontal',
       description: 'Informe a área da edificação situada dentro do recuo frontal obrigatório.',
-      rate: 0.20
+      propertyValuePercentage: 0.20
     },
     {
       key: 'areaRecuoLateralFundos',
       title: 'Área edificada sobre recuos laterais ou de fundos',
       shortTitle: 'Ocupação dos recuos laterais/fundos',
       description: 'Informe a área da edificação situada dentro dos recuos laterais ou de fundos.',
-      rate: 0.15
+      propertyValuePercentage: 0.15
     },
     {
       key: 'areaVagasGaragem',
       title: 'Área correspondente às vagas de garagem faltantes',
       shortTitle: 'Vagas de garagem faltantes',
       description: `Considere ${CONFIG.areaPorVaga.toFixed(0)} m² para cada vaga obrigatória não atendida.`,
-      rate: 0.10,
+      propertyValuePercentage: 0.10,
       hasParkingConverter: true
     },
     {
@@ -152,28 +172,28 @@
       title: 'Área excedente à taxa de ocupação',
       shortTitle: 'Taxa de ocupação excedente',
       description: 'Informe a parcela da projeção da edificação que excede a taxa de ocupação permitida.',
-      rate: 0.15
+      propertyValuePercentage: 0.15
     },
     {
       key: 'areaLazerFaltante',
       title: 'Área de lazer faltante',
       shortTitle: 'Área de lazer faltante',
       description: 'Informe a diferença entre a área de lazer exigida e a área efetivamente disponibilizada.',
-      rate: 0.05
+      propertyValuePercentage: 0.05
     },
     {
       key: 'areaPermeavelFaltante',
       title: 'Área permeável faltante',
       shortTitle: 'Área permeável faltante',
       description: 'Informe a diferença entre a área permeável exigida e a área efetivamente mantida.',
-      rate: 0.10
+      propertyValuePercentage: 0.10
     }
   ]);
 
   const HELP = Object.freeze({
     fl: {
       title: 'Fator de localização — FL',
-      html: `<p>Representa a valorização relativa da localização do imóvel. A ferramenta identifica o setor, a quadra e a face a partir da inscrição imobiliária e consulta a Planta de Valores Genéricos.</p><ul><li>Confira o logradouro e o bairro retornados.</li><li>Use o ajuste manual apenas quando houver justificativa cadastral.</li><li>Referência: parâmetros da ${CONFIG.leiFatores}.</li></ul>`
+      html: `<p>O imóvel é enquadrado em uma das dez zonas fiscais por meio do setor, da quadra e da face da inscrição imobiliária. Depois desse enquadramento, a calculadora aplica a <b>tabela específica da multa compensatória</b>.</p><p><b>Importante:</b> os fatores da Planta Genérica de Valores, que podem variar aproximadamente de 1,64 a 25, não são utilizados como FL da multa.</p><ul><li>Zona 1 — Azul: FL 1,00</li><li>Zona 2 — Ciano: FL 1,10</li><li>Zona 3 — Laranja: FL 1,20</li><li>Zona 4 — Verde: FL 1,40</li><li>Zona 5 — Vermelho: FL 1,70</li><li>Zona 6 — Cinza: FL 2,00</li><li>Zona 7 — Magenta: FL 2,50</li><li>Zona 8 — Preto: FL 3,30</li><li>Zona 9 — Marrom: FL 4,00</li><li>Zona 10 — Bege: FL 5,00</li></ul><p>Confira o logradouro, o bairro e a zona retornados antes de calcular.</p>`
     },
     vmq: {
       title: 'Valor do metro quadrado da construção — VMQ',
@@ -207,7 +227,6 @@
 
   const state = {
     zoneRecords: new Map(),
-    zoneCatalog: new Map(),
     location: null,
     lastResult: null,
     zoneTableLoaded: false
@@ -221,6 +240,7 @@
   function init() {
     setDefaultDate();
     populateFactorSelects();
+    populateManualZones();
     renderIrregularities();
     bindEvents();
     loadZoneTable();
@@ -260,7 +280,7 @@
               <strong>${escapeHtml(item.title)}</strong>
               <small>${escapeHtml(item.description)}</small>
             </label>
-            <span class="percentage-chip">${formatPercent(item.rate)}</span>
+            <span class="percentage-chip">${formatPercent(item.propertyValuePercentage)} do valor do imóvel</span>
           </div>
           <div class="irregularity-inputs" id="inputs-${item.key}" hidden>
             <div class="field-group">
@@ -272,11 +292,11 @@
               ${parkingConverter}
             </div>
             <div class="calculated-field">
-              <span>Área ponderada</span>
-              <strong id="weighted-${item.key}">0,00 m²</strong>
+              <span>Valor do imóvel correspondente à área</span>
+              <strong id="property-value-${item.key}">—</strong>
             </div>
             <div class="calculated-field">
-              <span>Valor parcial estimado</span>
+              <span>Valor parcial da multa (${formatPercent(item.propertyValuePercentage)} do valor do imóvel)</span>
               <strong id="partial-${item.key}">—</strong>
             </div>
           </div>
@@ -344,53 +364,52 @@
       setInscriptionStatus(`Tabela de zonas carregada: ${formatInteger(count)} registros disponíveis.`, 'success');
     } catch (error) {
       state.zoneTableLoaded = false;
-      $('#fallback-fator-wrap').hidden = false;
-      setInscriptionStatus('A tabela zonasfiscais.txt não foi carregada. Adicione o arquivo à pasta do site ou use “Carregar tabela de zonas”.', 'error');
+      setInscriptionStatus('A tabela zonasfiscais.txt não foi carregada. Adicione o arquivo à pasta do site, use “Carregar tabela de zonas” ou selecione manualmente a zona fiscal.', 'error');
       console.warn('Falha ao carregar tabela de zonas:', error);
     }
   }
 
   function parseZoneTable(text) {
     const records = new Map();
-    const zones = new Map();
 
     text.split(/\r?\n/).forEach(line => {
       if (!line.trim().startsWith('|')) return;
       const columns = line.split('|').slice(1, -1).map(value => value.trim());
-      if (columns.length < 8) return;
-      const [sectorRaw, blockRaw, faceRaw, street, district, zoneRaw, color, factorRaw] = columns;
-      if (!/^\d+$/.test(sectorRaw) || !/^\d+$/.test(blockRaw) || !/^\d+$/.test(faceRaw) || !/^\d+$/.test(zoneRaw)) return;
-      const factor = parsePtNumber(factorRaw);
-      if (!Number.isFinite(factor) || factor <= 0) return;
+      if (columns.length < 7) return;
 
+      const [sectorRaw, blockRaw, faceRaw, street, district, zoneRaw, colorRaw, valuationFactorRaw = ''] = columns;
+      if (!/^\d+$/.test(sectorRaw) || !/^\d+$/.test(blockRaw) || !/^\d+$/.test(faceRaw) || !/^\d+$/.test(zoneRaw)) return;
+
+      const zoneInfo = getLocationZone(Number(zoneRaw));
+      if (!zoneInfo) return;
+
+      const valuationFactor = parsePtNumber(valuationFactorRaw);
       const record = {
         sector: Number(sectorRaw),
         block: Number(blockRaw),
         face: Number(faceRaw),
         street: cleanText(street),
         district: cleanText(district),
-        zone: Number(zoneRaw),
-        color: cleanText(color),
-        factor
+        zone: zoneInfo.zone,
+        color: zoneInfo.color || cleanText(colorRaw),
+        factor: zoneInfo.factor,
+        valuationFactor: Number.isFinite(valuationFactor) && valuationFactor > 0 ? valuationFactor : null
       };
+
       const key = makeZoneKey(record.sector, record.block, record.face);
       if (!records.has(key)) records.set(key, []);
       records.get(key).push(record);
-      if (!zones.has(record.zone)) zones.set(record.zone, { zone: record.zone, color: record.color, factor: record.factor });
     });
 
     state.zoneRecords = records;
-    state.zoneCatalog = zones;
     state.zoneTableLoaded = records.size > 0;
     populateManualZones();
-    $('#fallback-fator-wrap').hidden = state.zoneTableLoaded;
     return [...records.values()].reduce((sum, list) => sum + list.length, 0);
   }
 
   function populateManualZones() {
     const select = $('#zona-manual');
-    const options = [...state.zoneCatalog.values()].sort((a, b) => a.zone - b.zone);
-    select.innerHTML = '<option value="">Selecione a zona fiscal</option>' + options.map(item =>
+    select.innerHTML = '<option value="">Selecione a zona fiscal</option>' + LOCATION_ZONES.map(item =>
       `<option value="${item.zone}" data-color="${escapeHtml(item.color)}" data-factor="${item.factor}">Zona ${item.zone} — ${escapeHtml(item.color)} (FL = ${formatFactor(item.factor)})</option>`
     ).join('');
   }
@@ -449,12 +468,20 @@
     }
 
     const record = matches[0];
+    const zoneInfo = getLocationZone(record.zone);
+    if (!zoneInfo) {
+      clearLocation(false);
+      setInscriptionStatus(`A zona fiscal ${record.zone} não possui FL configurado na tabela da multa.`, 'error');
+      return;
+    }
+
     setLocation({
-      zone: record.zone,
-      color: record.color,
-      factor: record.factor,
+      zone: zoneInfo.zone,
+      color: zoneInfo.color,
+      factor: zoneInfo.factor,
       street: record.street,
       district: record.district,
+      valuationFactor: record.valuationFactor,
       source: 'automatic'
     });
     setInscriptionStatus(matches.length > 1
@@ -464,40 +491,35 @@
 
   function syncManualZoneFields() {
     const option = $('#zona-manual').selectedOptions[0];
-    if (!option?.value) return;
+    if (!option?.value) {
+      $('#zona-numero-manual').value = '';
+      $('#fator-fl-manual').value = '';
+      return;
+    }
     $('#zona-numero-manual').value = `Zona ${option.value} — ${option.dataset.color || ''}`;
     $('#fator-fl-manual').value = formatFactor(Number(option.dataset.factor));
   }
 
   function applyManualLocation() {
     const option = $('#zona-manual').selectedOptions[0];
-    let zone;
-    let color;
-    let factor;
-
-    if (option?.value) {
-      zone = Number(option.value);
-      color = option.dataset.color || '';
-      factor = Number(option.dataset.factor);
-    } else {
-      factor = parsePtNumber($('#fator-fl-manual').value);
-      const label = $('#zona-numero-manual').value.trim();
-      zone = label || 'Manual';
-      color = '';
+    if (!option?.value) {
+      showError('Selecione uma das zonas fiscais para aplicar a localização manual.');
+      $('#zona-manual').focus();
+      return;
     }
 
-    if (!Number.isFinite(factor) || factor <= 0) {
-      showError('Informe um fator de localização válido para aplicar a localização manual.');
+    const zoneInfo = getLocationZone(Number(option.value));
+    if (!zoneInfo) {
+      showError('A zona selecionada não possui FL configurado na tabela da multa.');
       return;
     }
 
     setLocation({
-      zone,
-      color,
-      factor,
+      zone: zoneInfo.zone,
+      color: zoneInfo.color,
+      factor: zoneInfo.factor,
       street: $('#logradouro-manual').value.trim() || 'Logradouro não informado',
       district: $('#bairro-manual').value.trim() || 'Bairro não informado',
-      zoneLabel: typeof zone === 'string' ? zone : undefined,
       source: 'manual'
     });
     setInscriptionStatus('Localização definida manualmente. Registre a justificativa nas observações, quando aplicável.', 'success');
@@ -587,9 +609,9 @@
     const bmc = factors ? calculateBmc(factors) : null;
     IRREGULARITIES.forEach(item => {
       const area = getArea(item.key);
-      const weighted = area * item.rate;
-      $(`#weighted-${item.key}`).textContent = `${formatNumber(weighted)} m²`;
-      $(`#partial-${item.key}`).textContent = bmc && area > 0 ? formatCurrency(bmc * weighted) : '—';
+      const propertyValue = bmc && area > 0 ? bmc * area : null;
+      $(`#property-value-${item.key}`).textContent = propertyValue ? formatCurrency(propertyValue) : '—';
+      $(`#partial-${item.key}`).textContent = propertyValue ? formatCurrency(propertyValue * item.propertyValuePercentage) : '—';
     });
   }
 
@@ -607,9 +629,9 @@
 
     const areas = collectAreas();
     const activeEntries = areas.filter(entry => entry.area > 0);
-    const weightedTotal = activeEntries.reduce((sum, entry) => sum + entry.weightedArea, 0);
+    const reportedAreaTotal = activeEntries.reduce((sum, entry) => sum + entry.area, 0);
     $('#review-irregularidades').textContent = activeEntries.length ? `${activeEntries.length} selecionada${activeEntries.length === 1 ? '' : 's'}` : 'Nenhuma selecionada';
-    $('#review-area').textContent = `Área ponderada: ${formatNumber(weightedTotal)} m²`;
+    $('#review-area').textContent = `Soma das áreas informadas: ${formatNumber(reportedAreaTotal)} m²`;
   }
 
   function handleSubmit(event) {
@@ -680,8 +702,10 @@
     const factors = collectFactors(true);
     const bmc = calculateBmc(factors);
     const areas = collectAreas().filter(entry => entry.area > 0);
-    areas.forEach(entry => { entry.partialValue = bmc * entry.weightedArea; });
-    const weightedTotal = areas.reduce((sum, entry) => sum + entry.weightedArea, 0);
+    areas.forEach(entry => {
+      entry.propertyValue = bmc * entry.area;
+      entry.partialValue = entry.propertyValue * entry.propertyValuePercentage;
+    });
     const total = areas.reduce((sum, entry) => sum + entry.partialValue, 0);
 
     return {
@@ -692,7 +716,6 @@
       factors,
       bmc,
       areas,
-      weightedTotal,
       total,
       process: $('#processo').value.trim(),
       interested: $('#interessado').value.trim(),
@@ -735,7 +758,7 @@
       return {
         ...item,
         area: Number.isFinite(area) && area > 0 ? area : 0,
-        weightedArea: Number.isFinite(area) && area > 0 ? area * item.rate : 0,
+        propertyValue: 0,
         partialValue: 0
       };
     });
@@ -751,7 +774,6 @@
     $('#resultado-titulo').textContent = formatCurrency(result.total);
     $('#resultado-subtitulo').textContent = `Cálculo realizado com UFM de ${CONFIG.exercicio}: ${formatCurrency(CONFIG.ufm)}.`;
     $('#resultado-bmc').textContent = `${formatCurrency(result.bmc)}/m²`;
-    $('#resultado-area-ponderada').textContent = `${formatNumber(result.weightedTotal)} m²`;
     $('#resultado-quantidade').textContent = String(result.areas.length);
 
     const rows = result.areas.map(entry => resultRow(entry)).join('');
@@ -764,8 +786,8 @@
     return `<tr>
       <td><strong>${escapeHtml(entry.shortTitle)}</strong></td>
       <td class="numeric">${formatNumber(entry.area)} m²</td>
-      <td class="numeric">${formatPercent(entry.rate)}</td>
-      <td class="numeric">${formatNumber(entry.weightedArea)} m²</td>
+      <td class="numeric">${formatPercent(entry.propertyValuePercentage)}</td>
+      <td class="numeric">${formatCurrency(entry.propertyValue)}</td>
       <td class="numeric"><strong>${formatCurrency(entry.partialValue)}</strong></td>
     </tr>`;
   }
@@ -798,7 +820,6 @@
     $('#print-irregularidades-corpo').innerHTML = result.areas.map(entry => resultRow(entry)).join('');
 
     $('#print-bmc').textContent = `${formatCurrency(result.bmc)}/m²`;
-    $('#print-area').textContent = `${formatNumber(result.weightedTotal)} m²`;
     $('#print-total').textContent = formatCurrency(result.total);
     $('#print-formula-bmc').textContent = makeBmcFormula(result);
     $('#print-formula-vmc').textContent = makeVmcFormula(result);
@@ -818,8 +839,9 @@
   }
 
   function makeVmcFormula(result) {
-    const terms = result.areas.map(entry => `(${formatNumber(entry.area)} m² × ${formatPercent(entry.rate)})`).join(' + ');
-    return `VMC = BMC × Σ(Ai × i%) = ${formatCurrency(result.bmc)} × [${terms}] = ${formatCurrency(result.bmc)} × ${formatNumber(result.weightedTotal)} m² = ${formatCurrency(result.total)}`;
+    const terms = result.areas.map(entry => `[(${formatCurrency(result.bmc)}/m² × ${formatNumber(entry.area)} m²) × ${formatPercent(entry.propertyValuePercentage)}]`).join(' + ');
+    const partials = result.areas.map(entry => formatCurrency(entry.partialValue)).join(' + ');
+    return `VMC = Σ[(BMC × área da irregularidade) × % do valor do imóvel] = ${terms} = ${partials} = ${formatCurrency(result.total)}`;
   }
 
   function printResult() {
@@ -869,10 +891,9 @@
         street: result.location.street,
         mode: result.mode,
         total: result.total,
-        bmc: result.bmc,
-        weightedTotal: result.weightedTotal
+        bmc: result.bmc
       });
-      localStorage.setItem('multaCompensatoriaHistoricoV2', JSON.stringify(history.slice(0, 8)));
+      localStorage.setItem(CONFIG.historyStorageKey, JSON.stringify(history.slice(0, 8)));
       renderHistory();
     } catch (error) {
       console.warn('Não foi possível salvar o histórico local:', error);
@@ -881,7 +902,7 @@
 
   function getHistory() {
     try {
-      const parsed = JSON.parse(localStorage.getItem('multaCompensatoriaHistoricoV2') || '[]');
+      const parsed = JSON.parse(localStorage.getItem(CONFIG.historyStorageKey) || '[]');
       return Array.isArray(parsed) ? parsed : [];
     } catch {
       return [];
@@ -904,7 +925,7 @@
 
   function clearHistory() {
     if (!window.confirm('Deseja apagar o histórico salvo neste navegador?')) return;
-    localStorage.removeItem('multaCompensatoriaHistoricoV2');
+    localStorage.removeItem(CONFIG.historyStorageKey);
     renderHistory();
   }
 
@@ -918,6 +939,11 @@
 
   function getArea(key) {
     return parsePtNumber($(`#area-${key}`).value);
+  }
+
+  function getLocationZone(zone) {
+    const zoneNumber = Number(zone);
+    return LOCATION_ZONES.find(item => item.zone === zoneNumber) || null;
   }
 
   function getZoneLabel(location) {
