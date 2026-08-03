@@ -37,7 +37,7 @@
       <div class="header-meta">
         <span class="status-chip">UFM 2026: <strong>R$ 252,59</strong></span>
         <span class="status-chip">LC nº 429/2023</span>
-        <span class="version-chip">v2.6.0</span>
+        <span class="version-chip">v2.7.0</span>
       </div>
     </div>
   </header>
@@ -78,7 +78,7 @@
         </label>
         <label>
           <input type="radio" name="modoDocumento" value="administrativo">
-          <span><b>Demonstrativo administrativo</b><small>Para instrução de processo</small></span>
+          <span><b>Demonstrativo administrativo <em class="restricted-badge">Restrito</em></b><small>Uso exclusivo dos servidores autorizados</small></span>
         </label>
       </div>
     </section>
@@ -175,6 +175,13 @@
         </details>
 
         <div id="campos-administrativos" class="administrative-fields" hidden>
+          <div class="admin-session-banner">
+            <div>
+              <strong>Acesso administrativo autorizado</strong>
+              <span id="admin-session-description">Sessão temporária ativa nesta aba.</span>
+            </div>
+            <button id="lock-admin-access" class="button ghost" type="button">Bloquear acesso</button>
+          </div>
           <div class="subsection-heading">
             <h3>Identificação administrativa</h3>
             <p>Estes dados constarão apenas no demonstrativo administrativo.</p>
@@ -422,7 +429,7 @@
 
     <footer class="app-footer no-print">
       <p><strong>Referências:</strong> Lei Complementar nº 429/2023; Lei Complementar nº 20/2002; Decreto nº 13.857/2025.</p>
-      <p>Versão 2.6.0 — parâmetros de 2026.</p>
+      <p>Versão 2.7.0 — parâmetros de 2026.</p>
     </footer>
   </main>
 
@@ -487,10 +494,41 @@
     </section>
 
     <footer class="print-footer">
-      <span>Calculadora de Multa Compensatória — versão 2.6.0</span>
+      <span>Calculadora de Multa Compensatória — versão 2.7.0</span>
       <span id="print-emissao">Emitido em —</span>
     </footer>
   </section>
+
+
+
+  <dialog id="admin-access-dialog" class="help-dialog access-dialog" aria-labelledby="admin-access-title">
+    <form id="admin-access-form" novalidate>
+      <button id="admin-access-close" class="dialog-close" type="button" aria-label="Cancelar acesso">×</button>
+      <span class="section-mini-label">Acesso restrito</span>
+      <div class="access-dialog-heading">
+        <span class="access-lock-icon" aria-hidden="true">🔒</span>
+        <div>
+          <h2 id="admin-access-title">Demonstrativo administrativo</h2>
+          <p>Esta opção é destinada aos servidores municipais autorizados.</p>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label for="admin-password">Senha de acesso</label>
+        <div class="password-input-wrap">
+          <input id="admin-password" type="password" autocomplete="current-password" placeholder="Digite a senha" required>
+          <button id="toggle-admin-password" class="password-toggle" type="button" aria-label="Mostrar senha">Mostrar</button>
+        </div>
+        <p id="admin-access-status" class="field-status" aria-live="polite"></p>
+      </div>
+
+      <div class="dialog-actions">
+        <button id="admin-access-cancel" class="button ghost" type="button">Cancelar</button>
+        <button class="button primary" type="submit">Acessar área administrativa</button>
+      </div>
+      <p class="access-security-note">A autorização é temporária e válida somente nesta aba do navegador.</p>
+    </form>
+  </dialog>
 
   <dialog id="help-dialog" class="help-dialog">
     <form method="dialog">

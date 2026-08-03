@@ -7,10 +7,16 @@
     decretoUfm: 'Decreto nº 13.857, de 13 de novembro de 2025',
     leiMulta: 'Lei Complementar nº 429/2023',
     leiFatores: 'Lei Complementar nº 20/2002',
-    versao: '2.6.0',
+    versao: '2.7.0',
     arquivoZonas: './zonasfiscais.txt',
     areaPorVaga: 15,
-    historyStorageKey: 'multaCompensatoriaHistoricoV26'
+    historyStorageKey: 'multaCompensatoriaHistoricoV27',
+    adminPasswordHash: 'cfb98e79c4348da44370356bec67a01fdc8865ef53642168e6a1db5dfe034891',
+    adminSessionMinutes: 60,
+    adminMaxAttempts: 5,
+    adminLockMinutes: 10,
+    adminSessionStorageKey: 'multaCompensatoriaAdminSessionV1',
+    adminAttemptsStorageKey: 'multaCompensatoriaAdminAttemptsV1'
   });
 
   /*
@@ -229,7 +235,8 @@
     zoneRecords: new Map(),
     location: null,
     lastResult: null,
-    zoneTableLoaded: false
+    zoneTableLoaded: false,
+    adminAccessResolver: null
   };
 
   const $ = (selector, root = document) => root.querySelector(selector);
@@ -311,7 +318,20 @@
     $('#zona-manual').addEventListener('change', syncManualZoneFields);
     $('#aplicar-localizacao-manual').addEventListener('click', applyManualLocation);
 
-    $$('input[name="modoDocumento"]').forEach(input => input.addEventListener('change', handleModeChange));
+    $$('input[name="modoDocumento"]').forEach(input => input.addEventListener('change', event => {
+      void handleModeChange(event);
+    }));
+    $('#admin-access-form').addEventListener('submit', event => {
+      void handleAdminAccessSubmit(event);
+    });
+    $('#admin-access-cancel').addEventListener('click', () => closeAdminAccessDialog(false));
+    $('#admin-access-close').addEventListener('click', () => closeAdminAccessDialog(false));
+    $('#admin-access-dialog').addEventListener('cancel', event => {
+      event.preventDefault();
+      closeAdminAccessDialog(false);
+    });
+    $('#toggle-admin-password').addEventListener('click', toggleAdminPasswordVisibility);
+    $('#lock-admin-access').addEventListener('click', lockAdministrativeAccess);
     FACTOR_ORDER.forEach(key => {
       const select = document.getElementById(FACTOR_DEFINITIONS[key].id);
       select.addEventListener('change', () => {
@@ -552,10 +572,238 @@
     updateIrregularityPreviews();
   }
 
-  function handleModeChange() {
-    const administrative = getMode() === 'administrativo';
-    $('#campos-administrativos').hidden = !administrative;
+  async function handleModeChange(event) {
+    const requestedMode = event.target.value;
+
+    if (requestedMode !== 'administrativo') {
+      $('#campos-administrativos').hidden = true;
+      updateReview();
+      return;
+    }
+
+    if (hasValidAdminSession()) {
+      activateAdministrativeMode();
+      return;
+    }
+
+    setDocumentMode('simulacao');
+    $('#campos-administrativos').hidden = true;
     updateReview();
+
+    const granted = await requestAdministrativeAccess();
+    if (granted) activateAdministrativeMode();
+  }
+
+  function activateAdministrativeMode() {
+    setDocumentMode('administrativo');
+    $('#campos-administrativos').hidden = false;
+    updateAdminSessionDescription();
+    updateReview();
+  }
+
+  function setDocumentMode(mode) {
+    const input = $(`input[name="modoDocumento"][value="${mode}"]`);
+    if (input) input.checked = true;
+  }
+
+  function requestAdministrativeAccess() {
+    const dialog = $('#admin-access-dialog');
+    const passwordInput = $('#admin-password');
+    const status = $('#admin-access-status');
+    const lockRemaining = getAdminLockRemaining();
+
+    passwordInput.value = '';
+    passwordInput.type = 'password';
+    $('#toggle-admin-password').textContent = 'Mostrar';
+    $('#toggle-admin-password').setAttribute('aria-label', 'Mostrar senha');
+
+    if (lockRemaining > 0) {
+      setAdminAccessStatus(`Acesso temporariamente bloqueado. Tente novamente em ${formatLockDuration(lockRemaining)}.`, 'error');
+    } else {
+      status.textContent = '';
+      status.className = 'field-status';
+    }
+
+    if (typeof dialog.showModal !== 'function') {
+      window.alert('O navegador não oferece suporte ao diálogo de autenticação. Atualize o navegador para usar o modo administrativo.');
+      return Promise.resolve(false);
+    }
+
+    if (!dialog.open) dialog.showModal();
+    setTimeout(() => passwordInput.focus(), 0);
+
+    return new Promise(resolve => {
+      state.adminAccessResolver = resolve;
+    });
+  }
+
+  async function handleAdminAccessSubmit(event) {
+    event.preventDefault();
+
+    const lockRemaining = getAdminLockRemaining();
+    if (lockRemaining > 0) {
+      setAdminAccessStatus(`Acesso temporariamente bloqueado. Tente novamente em ${formatLockDuration(lockRemaining)}.`, 'error');
+      return;
+    }
+
+    const passwordInput = $('#admin-password');
+    const password = passwordInput.value;
+    if (!password) {
+      setAdminAccessStatus('Digite a senha de acesso.', 'error');
+      passwordInput.focus();
+      return;
+    }
+
+    try {
+      const passwordHash = await sha256(password);
+      if (passwordHash === CONFIG.adminPasswordHash) {
+        createAdminSession();
+        clearAdminAttempts();
+        setAdminAccessStatus('Acesso autorizado.', 'success');
+        closeAdminAccessDialog(true);
+        return;
+      }
+
+      const attempt = registerFailedAdminAttempt();
+      passwordInput.value = '';
+      passwordInput.focus();
+
+      if (attempt.locked) {
+        setAdminAccessStatus(`Número máximo de tentativas atingido. Acesso bloqueado por ${CONFIG.adminLockMinutes} minutos.`, 'error');
+      } else {
+        setAdminAccessStatus(`Senha incorreta. Restam ${attempt.remaining} tentativa${attempt.remaining === 1 ? '' : 's'}.`, 'error');
+      }
+    } catch (error) {
+      console.error('Falha ao verificar senha administrativa:', error);
+      setAdminAccessStatus('Não foi possível validar a senha neste navegador.', 'error');
+    }
+  }
+
+  function closeAdminAccessDialog(granted) {
+    const dialog = $('#admin-access-dialog');
+    if (dialog.open) dialog.close();
+
+    const resolver = state.adminAccessResolver;
+    state.adminAccessResolver = null;
+    if (resolver) resolver(Boolean(granted));
+
+    if (!granted) {
+      setDocumentMode('simulacao');
+      $('#campos-administrativos').hidden = true;
+      updateReview();
+    }
+  }
+
+  function toggleAdminPasswordVisibility() {
+    const input = $('#admin-password');
+    const button = $('#toggle-admin-password');
+    const show = input.type === 'password';
+    input.type = show ? 'text' : 'password';
+    button.textContent = show ? 'Ocultar' : 'Mostrar';
+    button.setAttribute('aria-label', show ? 'Ocultar senha' : 'Mostrar senha');
+    input.focus();
+  }
+
+  function createAdminSession() {
+    const expiresAt = Date.now() + CONFIG.adminSessionMinutes * 60 * 1000;
+    sessionStorage.setItem(CONFIG.adminSessionStorageKey, JSON.stringify({ expiresAt }));
+  }
+
+  function hasValidAdminSession() {
+    try {
+      const stored = JSON.parse(sessionStorage.getItem(CONFIG.adminSessionStorageKey) || 'null');
+      if (!stored?.expiresAt || stored.expiresAt <= Date.now()) {
+        sessionStorage.removeItem(CONFIG.adminSessionStorageKey);
+        return false;
+      }
+      return true;
+    } catch {
+      sessionStorage.removeItem(CONFIG.adminSessionStorageKey);
+      return false;
+    }
+  }
+
+  function getAdminSessionExpiry() {
+    try {
+      const stored = JSON.parse(sessionStorage.getItem(CONFIG.adminSessionStorageKey) || 'null');
+      return stored?.expiresAt || 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  function updateAdminSessionDescription() {
+    const expiresAt = getAdminSessionExpiry();
+    const text = expiresAt
+      ? `Sessão autorizada nesta aba até ${new Date(expiresAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}.`
+      : 'Sessão temporária ativa nesta aba.';
+    $('#admin-session-description').textContent = text;
+  }
+
+  function lockAdministrativeAccess() {
+    sessionStorage.removeItem(CONFIG.adminSessionStorageKey);
+    setDocumentMode('simulacao');
+    $('#campos-administrativos').hidden = true;
+    updateReview();
+  }
+
+  function getAdminAttemptState() {
+    try {
+      const state = JSON.parse(localStorage.getItem(CONFIG.adminAttemptsStorageKey) || '{}');
+      return {
+        attempts: Number.isInteger(state.attempts) ? state.attempts : 0,
+        lockUntil: Number.isFinite(state.lockUntil) ? state.lockUntil : 0
+      };
+    } catch {
+      return { attempts: 0, lockUntil: 0 };
+    }
+  }
+
+  function getAdminLockRemaining() {
+    const attemptState = getAdminAttemptState();
+    const remaining = attemptState.lockUntil - Date.now();
+    if (remaining <= 0 && attemptState.lockUntil) clearAdminAttempts();
+    return Math.max(0, remaining);
+  }
+
+  function registerFailedAdminAttempt() {
+    const attemptState = getAdminAttemptState();
+    const attempts = attemptState.attempts + 1;
+
+    if (attempts >= CONFIG.adminMaxAttempts) {
+      const lockUntil = Date.now() + CONFIG.adminLockMinutes * 60 * 1000;
+      localStorage.setItem(CONFIG.adminAttemptsStorageKey, JSON.stringify({ attempts: 0, lockUntil }));
+      return { locked: true, remaining: 0 };
+    }
+
+    localStorage.setItem(CONFIG.adminAttemptsStorageKey, JSON.stringify({ attempts, lockUntil: 0 }));
+    return { locked: false, remaining: CONFIG.adminMaxAttempts - attempts };
+  }
+
+  function clearAdminAttempts() {
+    localStorage.removeItem(CONFIG.adminAttemptsStorageKey);
+  }
+
+  function setAdminAccessStatus(message, type = '') {
+    const status = $('#admin-access-status');
+    status.textContent = message;
+    status.className = `field-status${type ? ` ${type}` : ''}`;
+  }
+
+  function formatLockDuration(milliseconds) {
+    const totalSeconds = Math.max(1, Math.ceil(milliseconds / 1000));
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    if (!minutes) return `${seconds} segundo${seconds === 1 ? '' : 's'}`;
+    if (!seconds) return `${minutes} minuto${minutes === 1 ? '' : 's'}`;
+    return `${minutes} min e ${seconds} s`;
+  }
+
+  async function sha256(value) {
+    if (!window.crypto?.subtle) throw new Error('Web Crypto API indisponível');
+    const data = new TextEncoder().encode(value);
+    const digest = await window.crypto.subtle.digest('SHA-256', data);
+    return [...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2, '0')).join('');
   }
 
   function toggleIrregularity(key, checked) {
@@ -633,6 +881,15 @@
     event.preventDefault();
     hideError();
     clearInvalidState();
+
+    if (getMode() === 'administrativo' && !hasValidAdminSession()) {
+      setDocumentMode('simulacao');
+      $('#campos-administrativos').hidden = true;
+      showError('A sessão administrativa expirou. Informe novamente a senha para gerar um demonstrativo administrativo.');
+      updateReview();
+      return;
+    }
+
     const validation = validateForm();
     if (!validation.valid) {
       showError(validation.messages.join(' '));
@@ -851,6 +1108,7 @@
     $$('.irregularity-item').forEach(item => item.classList.remove('active'));
     $$('.irregularity-inputs').forEach(element => { element.hidden = true; });
     FACTOR_ORDER.forEach(updateFactorBadge);
+    setDocumentMode('simulacao');
     $('#campos-administrativos').hidden = true;
     $('#resultado').hidden = true;
     state.lastResult = null;

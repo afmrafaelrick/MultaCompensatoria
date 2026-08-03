@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gerar hash da senha administrativa</title>
+  <style>
+    body { max-width: 760px; margin: 40px auto; padding: 0 20px; font: 16px/1.5 Arial, sans-serif; color: #232d5a; }
+    .card { border: 1px solid #dfe4f0; border-radius: 14px; padding: 24px; box-shadow: 0 12px 30px rgba(35,45,90,.08); }
+    label { display: block; margin: 18px 0 7px; font-weight: 700; }
+    input, textarea { width: 100%; box-sizing: border-box; padding: 11px 12px; border: 1px solid #cfd6e7; border-radius: 8px; font: inherit; }
+    textarea { min-height: 95px; resize: vertical; }
+    button { margin-top: 14px; padding: 11px 16px; border: 1px solid #e5ba00; border-radius: 9px; background: #ffd000; color: #232d5a; font-weight: 800; cursor: pointer; }
+    small { color: #667185; }
+    code { background: #f3f5fb; padding: 2px 5px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Gerar hash SHA-256 da senha</h1>
+    <p>Use este arquivo apenas localmente para criar uma nova senha do modo administrativo.</p>
+
+    <label for="senha">Nova senha</label>
+    <input id="senha" type="password" autocomplete="new-password">
+    <button id="gerar" type="button">Gerar hash</button>
+
+    <label for="resultado">Hash para copiar</label>
+    <textarea id="resultado" readonly></textarea>
+    <small>Substitua o valor de <code>adminPasswordHash</code> no início do arquivo <code>script.js</code>.</small>
+  </div>
+
+  <script>
+    document.getElementById('gerar').addEventListener('click', async () => {
+      const senha = document.getElementById('senha').value;
+      if (!senha) return alert('Digite a nova senha.');
+      const bytes = new TextEncoder().encode(senha);
+      const digest = await crypto.subtle.digest('SHA-256', bytes);
+      document.getElementById('resultado').value = [...new Uint8Array(digest)]
+        .map(byte => byte.toString(16).padStart(2, '0')).join('');
+    });
+  </script>
+</body>
+</html>
