@@ -666,3 +666,6 @@ td { font-size: .83rem; }
     text-align: left;
   }
 }
+
+/* Cabeçalhos numéricos podem quebrar linha sem alterar o alinhamento dos valores. */
+th.numeric { white-space: normal; }
