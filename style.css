@@ -1204,3 +1204,14 @@ th {
     justify-content: center;
   }
 }
+
+/* Impressão simplificada — v2.6.0 */
+@media print {
+  .print-summary-total-only {
+    grid-template-columns: 1fr;
+  }
+
+  .print-summary-total-only .print-total {
+    grid-column: auto;
+  }
+}

@@ -1,4 +1,4 @@
-# Calculadora de Multa Compensatória — versão 2.5.0
+# Calculadora de Multa Compensatória — versão 2.6.0
 
 Aplicação estática para GitHub Pages, sem dependências de framework e sem servidor.
 
@@ -51,14 +51,14 @@ const CONFIG = Object.freeze({
   decretoUfm: 'Decreto nº 13.857, de 13 de novembro de 2025',
   leiMulta: 'Lei Complementar nº 429/2023',
   leiFatores: 'Lei Complementar nº 20/2002',
-  versao: '2.5.0',
+  versao: '2.6.0',
   arquivoZonas: './zonasfiscais.txt',
   areaPorVaga: 15,
-  historyStorageKey: 'multaCompensatoriaHistoricoV25'
+  historyStorageKey: 'multaCompensatoriaHistoricoV26'
 });
 ```
 
-## Principais melhorias incluídas na versão 2.5.0
+## Principais melhorias incluídas na versão 2.6.0
 
 - adaptação visual à nova identidade do Município de Itajaí;
 - novo cabeçalho com marca oficial e navegação rápida;
@@ -79,7 +79,7 @@ const CONFIG = Object.freeze({
 
 Não há envio de dados para servidor. O histórico utiliza `localStorage`, permanece somente no navegador e pode ser apagado na própria página.
 
-## Alteração da versão 2.5.0
+## Alteração da versão 2.6.0
 
 - removidos da tela de resultado os três cards de resumo: BMC, critério de incidência e quantidade de irregularidades;
 - a síntese permanece disponível no demonstrativo de impressão e na memória matemática.
