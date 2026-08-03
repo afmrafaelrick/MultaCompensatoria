@@ -7,10 +7,10 @@
     decretoUfm: 'Decreto nº 13.857, de 13 de novembro de 2025',
     leiMulta: 'Lei Complementar nº 429/2023',
     leiFatores: 'Lei Complementar nº 20/2002',
-    versao: '2.3.0',
+    versao: '2.4.0',
     arquivoZonas: './zonasfiscais.txt',
     areaPorVaga: 15,
-    historyStorageKey: 'multaCompensatoriaHistoricoV23'
+    historyStorageKey: 'multaCompensatoriaHistoricoV24'
   });
 
   /*

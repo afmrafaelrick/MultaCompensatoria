@@ -13,29 +13,48 @@
 <body>
   <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
 
+    
   <header class="app-header no-print">
     <div class="app-shell header-inner">
-      <div class="brand">
-        <img class="brand-image" src="cabecalho.png" alt="Município de Itajaí" onerror="this.hidden=true">
-        <div class="brand-copy">
-          <span class="brand-kicker">Município de Itajaí</span>
-          <strong>Multa Compensatória</strong>
-          <span>Regularização de edificações — LC nº 429/2023</span>
-        </div>
+      <div class="header-branding">
+        <a class="brand" href="#conteudo" aria-label="Município de Itajaí">
+          <img class="brand-image" src="identidade-itajai.svg" alt="Itajaí Prefeitura" onerror="this.src='cabecalho.png'">
+          <div class="brand-copy">
+            <span class="brand-kicker">Secretaria Municipal de Desenvolvimento Urbano e Habitação</span>
+            <strong>Calculadora de Multa Compensatória</strong>
+            <span>Regularização de edificações — LC nº 429/2023</span>
+          </div>
+        </a>
+
+        <nav class="brand-nav" aria-label="Navegação rápida da aplicação">
+          <a href="#etapa-imovel">Imóvel</a>
+          <a href="#etapa-fatores">Fatores</a>
+          <a href="#etapa-irregularidades">Irregularidades</a>
+          <a href="#resultado">Resultado</a>
+        </nav>
       </div>
+
       <div class="header-meta">
         <span class="status-chip">UFM 2026: <strong>R$ 252,59</strong></span>
-        <span class="version-chip">v2.3.0</span>
+        <span class="status-chip">LC nº 429/2023</span>
+        <span class="version-chip">v2.4.0</span>
       </div>
     </div>
   </header>
 
+
   <main id="conteudo" class="app-shell page-layout">
+        
     <section class="hero no-print" aria-labelledby="titulo-principal">
       <div>
-        <p class="eyebrow">Ferramenta de apoio ao cálculo</p>
-        <h1 id="titulo-principal">Simulador de Multa Compensatória</h1>
-        <p class="hero-text">Informe os dados do imóvel, selecione os parâmetros aplicáveis e identifique as áreas de irregularidade. A ferramenta apresenta a memória completa do cálculo e um demonstrativo pronto para impressão.</p>
+        <p class="eyebrow">Identidade visual atualizada</p>
+        <h1 id="titulo-principal">Calculadora de Multa Compensatória</h1>
+        <p class="hero-text">Ferramenta de apoio para identificação do imóvel, preenchimento dos fatores e demonstração detalhada do cálculo da multa compensatória, com resultado pronto para impressão ou geração de PDF.</p>
+        <div class="hero-tags">
+          <span>Preenchimento guiado</span>
+          <span>Demonstrativo administrativo</span>
+          <span>Impressão A4</span>
+        </div>
       </div>
       <div class="hero-alert" role="note">
         <span class="hero-alert-icon" aria-hidden="true">i</span>
@@ -45,6 +64,7 @@
         </div>
       </div>
     </section>
+
 
     <section class="mode-panel no-print" aria-labelledby="modo-titulo">
       <div>
@@ -420,14 +440,14 @@
 
     <footer class="app-footer no-print">
       <p><strong>Referências:</strong> Lei Complementar nº 429/2023; Lei Complementar nº 20/2002; Decreto nº 13.857/2025.</p>
-      <p>Versão 2.3.0 — parâmetros de 2026.</p>
+      <p>Versão 2.4.0 — parâmetros de 2026.</p>
     </footer>
   </main>
 
   <section id="print-document" class="print-document" aria-hidden="true">
     <header class="print-header">
       <div class="print-brand">
-        <img src="cabecalho.png" alt="Município de Itajaí" onerror="this.hidden=true">
+        <img src="identidade-itajai.svg" alt="Itajaí Prefeitura" onerror="this.src='cabecalho.png'">
         <div>
           <strong>MUNICÍPIO DE ITAJAÍ</strong>
           <span>Secretaria Municipal de Desenvolvimento Urbano e Habitação</span>
@@ -487,7 +507,7 @@
     </section>
 
     <footer class="print-footer">
-      <span>Calculadora de Multa Compensatória — versão 2.3.0</span>
+      <span>Calculadora de Multa Compensatória — versão 2.4.0</span>
       <span id="print-emissao">Emitido em —</span>
     </footer>
   </section>
