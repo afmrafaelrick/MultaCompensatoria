@@ -7,10 +7,10 @@
     decretoUfm: 'Decreto nº 13.857, de 13 de novembro de 2025',
     leiMulta: 'Lei Complementar nº 429/2023',
     leiFatores: 'Lei Complementar nº 20/2002',
-    versao: '2.4.0',
+    versao: '2.5.0',
     arquivoZonas: './zonasfiscais.txt',
     areaPorVaga: 15,
-    historyStorageKey: 'multaCompensatoriaHistoricoV24'
+    historyStorageKey: 'multaCompensatoriaHistoricoV25'
   });
 
   /*
@@ -766,8 +766,6 @@
     $('#resultado-selo').textContent = administrative ? 'DEMONSTRATIVO ADMINISTRATIVO' : 'SIMULAÇÃO';
     $('#resultado-titulo').textContent = formatCurrency(result.total);
     $('#resultado-subtitulo').textContent = `Cálculo realizado com UFM de ${CONFIG.exercicio}: ${formatCurrency(CONFIG.ufm)}.`;
-    $('#resultado-bmc').textContent = `${formatCurrency(result.bmc)}/m²`;
-    $('#resultado-quantidade').textContent = String(result.areas.length);
 
     const rows = result.areas.map(entry => resultRow(entry)).join('');
     $('#resultado-irregularidades-corpo').innerHTML = rows;
