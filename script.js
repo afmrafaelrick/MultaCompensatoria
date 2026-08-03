@@ -7,10 +7,10 @@
     decretoUfm: 'Decreto nº 13.857, de 13 de novembro de 2025',
     leiMulta: 'Lei Complementar nº 429/2023',
     leiFatores: 'Lei Complementar nº 20/2002',
-    versao: '2.2.0',
+    versao: '2.3.0',
     arquivoZonas: './zonasfiscais.txt',
     areaPorVaga: 15,
-    historyStorageKey: 'multaCompensatoriaHistoricoV22'
+    historyStorageKey: 'multaCompensatoriaHistoricoV23'
   });
 
   /*
@@ -136,35 +136,35 @@
       title: 'Área correspondente aos pavimentos excedentes',
       shortTitle: 'Pavimentos excedentes',
       description: 'Informe a área construída situada nos pavimentos que excedem o limite aplicável.',
-      propertyValuePercentage: 0.40
+      infractionFactor: 0.40
     },
     {
       key: 'areaExtrapolaCA',
       title: 'Área excedente ao coeficiente de aproveitamento',
       shortTitle: 'Coeficiente de aproveitamento excedente',
       description: 'Informe somente a parcela da área computável que excede o coeficiente permitido.',
-      propertyValuePercentage: 0.10
+      infractionFactor: 0.10
     },
     {
       key: 'areaRecuoFrontal',
       title: 'Área edificada sobre o recuo frontal',
       shortTitle: 'Ocupação do recuo frontal',
       description: 'Informe a área da edificação situada dentro do recuo frontal obrigatório.',
-      propertyValuePercentage: 0.20
+      infractionFactor: 0.20
     },
     {
       key: 'areaRecuoLateralFundos',
       title: 'Área edificada sobre recuos laterais ou de fundos',
       shortTitle: 'Ocupação dos recuos laterais/fundos',
       description: 'Informe a área da edificação situada dentro dos recuos laterais ou de fundos.',
-      propertyValuePercentage: 0.15
+      infractionFactor: 0.15
     },
     {
       key: 'areaVagasGaragem',
       title: 'Área correspondente às vagas de garagem faltantes',
       shortTitle: 'Vagas de garagem faltantes',
       description: `Considere ${CONFIG.areaPorVaga.toFixed(0)} m² para cada vaga obrigatória não atendida.`,
-      propertyValuePercentage: 0.10,
+      infractionFactor: 0.10,
       hasParkingConverter: true
     },
     {
@@ -172,21 +172,21 @@
       title: 'Área excedente à taxa de ocupação',
       shortTitle: 'Taxa de ocupação excedente',
       description: 'Informe a parcela da projeção da edificação que excede a taxa de ocupação permitida.',
-      propertyValuePercentage: 0.15
+      infractionFactor: 0.15
     },
     {
       key: 'areaLazerFaltante',
       title: 'Área de lazer faltante',
       shortTitle: 'Área de lazer faltante',
       description: 'Informe a diferença entre a área de lazer exigida e a área efetivamente disponibilizada.',
-      propertyValuePercentage: 0.05
+      infractionFactor: 0.05
     },
     {
       key: 'areaPermeavelFaltante',
       title: 'Área permeável faltante',
       shortTitle: 'Área permeável faltante',
       description: 'Informe a diferença entre a área permeável exigida e a área efetivamente mantida.',
-      propertyValuePercentage: 0.10
+      infractionFactor: 0.10
     }
   ]);
 
@@ -280,7 +280,7 @@
               <strong>${escapeHtml(item.title)}</strong>
               <small>${escapeHtml(item.description)}</small>
             </label>
-            <span class="percentage-chip">${formatPercent(item.propertyValuePercentage)} do valor do imóvel</span>
+            <span class="percentage-chip">Fator da infração: ${formatPercent(item.infractionFactor)}</span>
           </div>
           <div class="irregularity-inputs" id="inputs-${item.key}" hidden>
             <div class="field-group">
@@ -292,11 +292,7 @@
               ${parkingConverter}
             </div>
             <div class="calculated-field">
-              <span>Valor do imóvel correspondente à área</span>
-              <strong id="property-value-${item.key}">—</strong>
-            </div>
-            <div class="calculated-field">
-              <span>Valor parcial da multa (${formatPercent(item.propertyValuePercentage)} do valor do imóvel)</span>
+              <span>Valor parcial da multa (Fator da infração: ${formatPercent(item.infractionFactor)})</span>
               <strong id="partial-${item.key}">—</strong>
             </div>
           </div>
@@ -609,9 +605,8 @@
     const bmc = factors ? calculateBmc(factors) : null;
     IRREGULARITIES.forEach(item => {
       const area = getArea(item.key);
-      const propertyValue = bmc && area > 0 ? bmc * area : null;
-      $(`#property-value-${item.key}`).textContent = propertyValue ? formatCurrency(propertyValue) : '—';
-      $(`#partial-${item.key}`).textContent = propertyValue ? formatCurrency(propertyValue * item.propertyValuePercentage) : '—';
+      const partialValue = bmc && area > 0 ? bmc * area * item.infractionFactor : null;
+      $(`#partial-${item.key}`).textContent = partialValue ? formatCurrency(partialValue) : '—';
     });
   }
 
@@ -703,8 +698,7 @@
     const bmc = calculateBmc(factors);
     const areas = collectAreas().filter(entry => entry.area > 0);
     areas.forEach(entry => {
-      entry.propertyValue = bmc * entry.area;
-      entry.partialValue = entry.propertyValue * entry.propertyValuePercentage;
+      entry.partialValue = bmc * entry.area * entry.infractionFactor;
     });
     const total = areas.reduce((sum, entry) => sum + entry.partialValue, 0);
 
@@ -758,7 +752,6 @@
       return {
         ...item,
         area: Number.isFinite(area) && area > 0 ? area : 0,
-        propertyValue: 0,
         partialValue: 0
       };
     });
@@ -786,8 +779,7 @@
     return `<tr>
       <td><strong>${escapeHtml(entry.shortTitle)}</strong></td>
       <td class="numeric">${formatNumber(entry.area)} m²</td>
-      <td class="numeric">${formatPercent(entry.propertyValuePercentage)}</td>
-      <td class="numeric">${formatCurrency(entry.propertyValue)}</td>
+      <td class="numeric">${formatPercent(entry.infractionFactor)}</td>
       <td class="numeric"><strong>${formatCurrency(entry.partialValue)}</strong></td>
     </tr>`;
   }
@@ -839,9 +831,9 @@
   }
 
   function makeVmcFormula(result) {
-    const terms = result.areas.map(entry => `[(${formatCurrency(result.bmc)}/m² × ${formatNumber(entry.area)} m²) × ${formatPercent(entry.propertyValuePercentage)}]`).join(' + ');
+    const terms = result.areas.map(entry => `[${formatCurrency(result.bmc)}/m² × ${formatNumber(entry.area)} m² × ${formatPercent(entry.infractionFactor)}]`).join(' + ');
     const partials = result.areas.map(entry => formatCurrency(entry.partialValue)).join(' + ');
-    return `VMC = Σ[(BMC × área da irregularidade) × % do valor do imóvel] = ${terms} = ${partials} = ${formatCurrency(result.total)}`;
+    return `VMC = Σ[BMC × área da irregularidade × fator da infração] = ${terms} = ${partials} = ${formatCurrency(result.total)}`;
   }
 
   function printResult() {
