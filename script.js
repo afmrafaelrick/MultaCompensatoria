@@ -7,11 +7,11 @@
     decretoUfm: 'Decreto nº 13.857, de 13 de novembro de 2025',
     leiMulta: 'Lei Complementar nº 429/2023',
     leiFatores: 'Lei Complementar nº 20/2002',
-    versao: '2.7.0',
+    versao: '2.8.0',
     arquivoZonas: './zonasfiscais.txt',
     areaPorVaga: 15,
-    historyStorageKey: 'multaCompensatoriaHistoricoV27',
-    adminPasswordHash: '2126c89fa86bf4bafe424a094b1fc308b614819c3052e15127d8e1aead9c4890',
+    historyStorageKey: 'multaCompensatoriaHistoricoV28',
+    adminPasswordHash: 'cfb98e79c4348da44370356bec67a01fdc8865ef53642168e6a1db5dfe034891',
     adminSessionMinutes: 60,
     adminMaxAttempts: 5,
     adminLockMinutes: 10,
@@ -102,7 +102,7 @@
       name: 'Padrão de acabamento',
       code: 'FA',
       options: [
-        ['Residencial multifamiliar — padrão luxo', 2.00],
+        ['Residencial multifamiliar — padrão alto luxo', 2.00],
         ['Residencial multifamiliar — padrão alto', 1.50],
         ['Residencial multifamiliar — padrão normal', 1.00],
         ['Residencial multifamiliar — padrão baixo', 0.75],
@@ -223,7 +223,59 @@
     },
     fa: {
       title: 'Fator de acabamento — FA',
-      html: `<p>Representa o padrão construtivo e de acabamento predominante da edificação.</p><ul><li>A avaliação deve considerar o conjunto da edificação, e não um elemento isolado.</li><li>Observe materiais, instalações, esquadrias, revestimentos e nível geral de execução.</li><li>Referência: padrões de avaliação da ${CONFIG.leiFatores}.</li></ul>`
+      html: `
+        <div class="help-callout"><strong>O FA não é escolhido por avaliação subjetiva.</strong> Ele é definido pela pontuação obtida na tabela correspondente ao tipo da edificação, conforme a ${CONFIG.leiFatores}.</div>
+        <p>Para preencher este campo:</p>
+        <ol class="help-steps">
+          <li>identifique se a edificação é <b>residencial multifamiliar</b>, <b>residencial unifamiliar</b> ou <b>comercial</b>;</li>
+          <li>some os pontos dos critérios previstos na tabela legal daquela tipologia;</li>
+          <li>localize a faixa da pontuação total e selecione no formulário o padrão correspondente.</li>
+        </ol>
+
+        <h3 class="help-subtitle">Residencial multifamiliar</h3>
+        <p>A pontuação considera características da unidade autônoma, como <b>área, número de quartos e número de banheiros</b>, e itens do condomínio. Na tabela legal, cada um dos seguintes equipamentos acrescenta 1 ponto: piscina, sauna, academia, salão de festas, vaga coberta, playground, área esportiva e salão de jogos.</p>
+        <div class="help-table-wrap">
+          <table class="help-table">
+            <thead><tr><th>Pontuação total</th><th>Padrão</th><th>FA</th></tr></thead>
+            <tbody>
+              <tr><td>Acima de 19</td><td>Alto luxo</td><td>2,00</td></tr>
+              <tr><td>De 14 a 19</td><td>Alto</td><td>1,50</td></tr>
+              <tr><td>De 9 a 13</td><td>Normal</td><td>1,00</td></tr>
+              <tr><td>De 5 a 8</td><td>Baixo</td><td>0,75</td></tr>
+              <tr><td>Até 4</td><td>Popular</td><td>0,50</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 class="help-subtitle">Residencial unifamiliar</h3>
+        <p>Some os pontos dos elementos previstos na tabela específica para residências unifamiliares e aplique o enquadramento abaixo.</p>
+        <div class="help-table-wrap">
+          <table class="help-table">
+            <thead><tr><th>Pontuação total</th><th>Padrão</th><th>FA</th></tr></thead>
+            <tbody>
+              <tr><td>Acima de 13</td><td>Luxo</td><td>2,00</td></tr>
+              <tr><td>De 11 a 13</td><td>Alto</td><td>1,50</td></tr>
+              <tr><td>De 7 a 10</td><td>Normal</td><td>1,00</td></tr>
+              <tr><td>De 4 a 6</td><td>Baixo</td><td>0,75</td></tr>
+              <tr><td>Até 3</td><td>Popular</td><td>0,50</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 class="help-subtitle">Comercial</h3>
+        <p>Some os pontos da tabela específica para edificações comerciais.</p>
+        <div class="help-table-wrap">
+          <table class="help-table">
+            <thead><tr><th>Pontuação total</th><th>Padrão</th><th>FA</th></tr></thead>
+            <tbody>
+              <tr><td>Acima de 2</td><td>Alto</td><td>1,50</td></tr>
+              <tr><td>Até 2</td><td>Normal</td><td>1,00</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="help-warning"><strong>Importante:</strong> não classifique o acabamento apenas pela aparência geral, por um único material ou por comparação com imóveis vizinhos. No demonstrativo administrativo, é recomendável registrar nas observações a pontuação obtida e a tabela utilizada.</p>
+      `
     },
     fu: {
       title: 'Fator de uso e tipo — FU',

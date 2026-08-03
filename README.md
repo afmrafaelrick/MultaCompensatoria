@@ -1,4 +1,4 @@
-# Calculadora de Multa Compensatória — versão 2.7.0
+# Calculadora de Multa Compensatória — versão 2.8.0
 
 Aplicação estática para GitHub Pages, sem dependências de framework e sem servidor.
 
@@ -98,3 +98,8 @@ A última coluna do arquivo `zonasfiscais.txt` pode conter o fator da Planta Gen
 ## Privacidade
 
 Não há envio de dados para servidor. O histórico utiliza `localStorage`. A autorização administrativa utiliza `sessionStorage`, permanecendo somente na aba atual até o encerramento ou até o prazo de expiração.
+
+
+## Ajuda objetiva do Fator de Acabamento — FA
+
+A versão 2.8.0 esclarece que o FA deve ser obtido pela soma da pontuação da tabela correspondente da Lei Complementar nº 20/2002. A ajuda apresenta as faixas de enquadramento para residencial multifamiliar, residencial unifamiliar e comercial, e recomenda registrar a pontuação no demonstrativo administrativo.
