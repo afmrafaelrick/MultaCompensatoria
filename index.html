@@ -25,7 +25,7 @@
       </div>
       <div class="header-meta">
         <span class="status-chip">UFM 2026: <strong>R$ 252,59</strong></span>
-        <span class="version-chip">v2.2.0</span>
+        <span class="version-chip">v2.3.0</span>
       </div>
     </div>
   </header>
@@ -283,7 +283,7 @@
           <div>
             <span class="section-mini-label">Incidências</span>
             <h2 id="irregularidades-titulo">Áreas de irregularidade</h2>
-            <p>Marque apenas as irregularidades existentes. Para cada item, informe a área correspondente em metros quadrados. O percentual indicado representa a parcela do valor do imóvel aplicável àquela irregularidade.</p>
+            <p>Marque apenas as irregularidades existentes. Para cada item, informe a área correspondente em metros quadrados. O percentual indicado é o fator da infração aplicável àquele item.</p>
           </div>
         </div>
 
@@ -291,7 +291,7 @@
 
         <div class="info-note">
           <span aria-hidden="true">i</span>
-          <p>Para cada irregularidade, a calculadora determina o <strong>valor do imóvel correspondente à área informada</strong> e aplica sobre ele o respectivo <strong>percentual do valor do imóvel</strong>. Para vagas de garagem faltantes, considera-se <strong>15,00 m² por vaga</strong>.</p>
+          <p>O valor parcial de cada item é calculado multiplicando a <strong>Base da Multa Compensatória — BMC</strong> pela <strong>área da irregularidade</strong> e pelo respectivo <strong>fator da infração</strong>. Para vagas de garagem faltantes, considera-se <strong>15,00 m² por vaga</strong>.</p>
         </div>
       </section>
 
@@ -359,8 +359,8 @@
         </article>
         <article>
           <span>Critério de incidência</span>
-          <strong>% do valor do imóvel</strong>
-          <small>Aplicado individualmente a cada irregularidade</small>
+          <strong>Fator da infração</strong>
+          <small>Percentual aplicado individualmente a cada irregularidade</small>
         </article>
         <article>
           <span>Irregularidades consideradas</span>
@@ -382,8 +382,7 @@
               <tr>
                 <th>Irregularidade</th>
                 <th class="numeric">Área</th>
-                <th class="numeric">% do valor do imóvel</th>
-                <th class="numeric">Valor do imóvel referente à área</th>
+                <th class="numeric">Fator da infração</th>
                 <th class="numeric">Valor parcial da multa</th>
               </tr>
             </thead>
@@ -421,7 +420,7 @@
 
     <footer class="app-footer no-print">
       <p><strong>Referências:</strong> Lei Complementar nº 429/2023; Lei Complementar nº 20/2002; Decreto nº 13.857/2025.</p>
-      <p>Versão 2.2.0 — parâmetros de 2026.</p>
+      <p>Versão 2.3.0 — parâmetros de 2026.</p>
     </footer>
   </main>
 
@@ -457,7 +456,7 @@
     <section class="print-section">
       <h2>3. Irregularidades consideradas</h2>
       <table class="print-table">
-        <thead><tr><th>Irregularidade</th><th class="numeric">Área</th><th class="numeric">% do valor do imóvel</th><th class="numeric">Valor do imóvel referente à área</th><th class="numeric">Valor parcial da multa</th></tr></thead>
+        <thead><tr><th>Irregularidade</th><th class="numeric">Área</th><th class="numeric">Fator da infração</th><th class="numeric">Valor parcial da multa</th></tr></thead>
         <tbody id="print-irregularidades-corpo"></tbody>
       </table>
     </section>
@@ -466,7 +465,7 @@
       <h2>4. Síntese do cálculo</h2>
       <div class="print-summary-grid">
         <div><span>Base da multa — BMC</span><strong id="print-bmc">—</strong></div>
-        <div><span>Critério de incidência</span><strong>% do valor do imóvel</strong></div>
+        <div><span>Critério de incidência</span><strong>Fator da infração</strong></div>
         <div class="print-total"><span>Valor da multa compensatória</span><strong id="print-total">—</strong></div>
       </div>
       <div class="print-formulas">
@@ -484,11 +483,11 @@
       <h2>6. Notas e referências</h2>
       <p id="print-nota-natureza"></p>
       <p>A UFM utilizada é de <strong>R$ 252,59</strong>, vigente para o exercício de 2026, conforme Decreto nº 13.857, de 13 de novembro de 2025.</p>
-      <p>Os fatores de avaliação utilizados pela ferramenta têm referência nos parâmetros cadastrais e tributários da Lei Complementar nº 20/2002. A fórmula e os percentuais aplicáveis às irregularidades seguem a Lei Complementar nº 429/2023. Cada percentual representa uma parcela do valor do imóvel correspondente à respectiva área irregular.</p>
+      <p>Os fatores de avaliação utilizados pela ferramenta têm referência nos parâmetros cadastrais e tributários da Lei Complementar nº 20/2002. A fórmula e os fatores de infração aplicáveis às irregularidades seguem a Lei Complementar nº 429/2023. Cada percentual corresponde ao fator da infração aplicado à respectiva área irregular.</p>
     </section>
 
     <footer class="print-footer">
-      <span>Calculadora de Multa Compensatória — versão 2.2.0</span>
+      <span>Calculadora de Multa Compensatória — versão 2.3.0</span>
       <span id="print-emissao">Emitido em —</span>
     </footer>
   </section>
