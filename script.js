@@ -11,7 +11,7 @@
     arquivoZonas: './zonasfiscais.txt',
     areaPorVaga: 15,
     historyStorageKey: 'multaCompensatoriaHistoricoV29',
-    adminPasswordHash: 'cfb98e79c4348da44370356bec67a01fdc8865ef53642168e6a1db5dfe034891',
+    adminPasswordHash: '2126c89fa86bf4bafe424a094b1fc308b614819c3052e15127d8e1aead9c4890',
     adminSessionMinutes: 60,
     adminMaxAttempts: 5,
     adminLockMinutes: 10,
