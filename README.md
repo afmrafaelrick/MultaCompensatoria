@@ -1,82 +1,56 @@
-# Calculadora de Multa Compensatória — versão 2.8.0
+# Calculadora de Multa Compensatória — versão 2.9.0
 
-Aplicação estática para GitHub Pages, sem dependências de framework e sem servidor.
+Aplicação estática para GitHub Pages, sem servidor próprio.
 
-## Novidade desta versão
+## Novidade da versão 2.9.0 — geração direta de PDF
 
-O modo **Demonstrativo administrativo** passou a exigir senha. A proteção inclui:
+O botão do resultado passou de **“Imprimir / salvar PDF”** para **“Gerar PDF”**.
 
-- solicitação da senha em uma janela própria;
-- hash SHA-256, sem senha escrita diretamente no código;
-- sessão válida por 60 minutos e somente na aba atual;
-- botão para bloquear novamente o acesso;
-- limite de cinco tentativas;
-- bloqueio de dez minutos após o limite de erros;
-- nova validação no momento de calcular, caso a sessão tenha expirado.
+Agora o aplicativo:
 
-### Senha temporária desta versão
+- cria o documento PDF diretamente no navegador;
+- baixa o arquivo sem abrir a janela de impressão;
+- não acrescenta URL, data, título da página ou outros cabeçalhos automáticos do navegador;
+- gera paginação, cabeçalhos e rodapés próprios;
+- utiliza a identidade visual do Município de Itajaí;
+- cria um nome de arquivo com natureza do documento, inscrição imobiliária e data-base;
+- mantém a exigência de sessão administrativa válida para gerar o demonstrativo administrativo.
 
-```text
-ITJ-Adm#2026-L7q9!
-```
-
-Troque essa senha antes de publicar o aplicativo.
-
-## Como alterar a senha
-
-1. Abra localmente o arquivo `gerar-hash-senha.html`.
-2. Digite a nova senha e clique em **Gerar hash**.
-3. Copie o resultado.
-4. Abra `script.js`.
-5. No objeto `CONFIG`, substitua o conteúdo de `adminPasswordHash` pelo novo hash.
-
-Exemplo:
-
-```js
-adminPasswordHash: 'COLE_AQUI_O_NOVO_HASH',
-```
-
-O arquivo `gerar-hash-senha.html` não é necessário no site publicado. Ele pode ser guardado apenas como ferramenta administrativa.
-
-## Limitação de segurança do GitHub Pages
-
-O GitHub Pages publica arquivos estáticos, e toda a lógica executa no navegador. Portanto, essa senha é uma **barreira de uso e conveniência**, adequada para impedir acesso casual, mas não equivale a autenticação segura em servidor. Uma pessoa com conhecimento técnico e acesso ao código público pode contornar a restrição.
-
-Para controle efetivamente seguro, a aplicação deve ser protegida por autenticação externa ou migrada para uma estrutura com servidor, por exemplo:
-
-- Cloudflare Access;
-- autenticação institucional;
-- servidor interno ou VPN;
-- aplicação com backend e controle de usuários.
+A geração usa as bibliotecas **jsPDF 3.0.3** e **jsPDF-AutoTable 5.0.2**, carregadas pelo `index.html` por CDN. Portanto, a conexão com a internet precisa estar disponível no momento da geração.
 
 ## Arquivos
 
-- `index.html` — estrutura do formulário, resultado, diálogos e demonstrativo de impressão.
-- `style.css` — layout responsivo e folha A4 própria.
-- `script.js` — busca cadastral, validações, cálculo, autenticação local, relatório e histórico.
-- `identidade-itajai.svg` — identidade visual usada no cabeçalho e na impressão.
-- `gerar-hash-senha.html` — ferramenta local para gerar o hash de uma nova senha.
+- `index.html` — estrutura do formulário, resultado e carregamento das bibliotecas de PDF.
+- `style.css` — layout responsivo e estados visuais.
+- `script.js` — busca cadastral, validações, cálculo, autenticação, geração de PDF e histórico.
+- `identidade-itajai.svg` — identidade visual usada no cabeçalho e no PDF.
+- `gerar-hash-senha.html` — ferramenta local para gerar o hash de uma nova senha administrativa.
 - `zonasfiscais.txt` — base cadastral completa usada pela busca automática; deve permanecer na raiz do site.
 
 ## Publicação
 
 1. Faça uma cópia de segurança do repositório atual.
 2. Substitua `index.html`, `style.css` e `script.js`.
-3. Mantenha `identidade-itajai.svg` na raiz.
-4. Mantenha ou adicione `zonasfiscais.txt` na raiz.
-5. Altere a senha temporária antes da publicação.
-6. Teste o modo administrativo em janela normal e em janela anônima.
+3. Adicione ou mantenha `identidade-itajai.svg` na raiz.
+4. Mantenha `zonasfiscais.txt` na raiz.
+5. Mantenha a senha administrativa já definida ou altere seu hash antes da publicação.
+6. Faça um cálculo de teste e confirme que o botão **Gerar PDF** baixa o arquivo diretamente.
 
-## Parâmetros de acesso no `script.js`
+## Como alterar a senha administrativa
+
+1. Abra localmente `gerar-hash-senha.html`.
+2. Digite a nova senha e clique em **Gerar hash**.
+3. Copie o resultado.
+4. Abra `script.js`.
+5. Substitua o conteúdo de `adminPasswordHash` pelo novo hash.
 
 ```js
-adminPasswordHash: '...',
-adminSessionMinutes: 60,
-adminMaxAttempts: 5,
-adminLockMinutes: 10,
-adminSessionStorageKey: 'multaCompensatoriaAdminSessionV1',
-adminAttemptsStorageKey: 'multaCompensatoriaAdminAttemptsV1'
+adminPasswordHash: 'COLE_AQUI_O_NOVO_HASH',
 ```
+
+## Limitação da proteção por senha
+
+Como o GitHub Pages publica arquivos estáticos, a senha é uma barreira de uso contra acesso casual, não uma autenticação segura em servidor. Para controle rigoroso de usuários, seria necessário proteger o endereço por autenticação institucional, VPN, Cloudflare Access ou backend próprio.
 
 ## Regra do Fator de Localização da multa
 
@@ -95,11 +69,10 @@ A última coluna do arquivo `zonasfiscais.txt` pode conter o fator da Planta Gen
 | 9 | Marrom | 4,00 |
 | 10 | Bege | 5,00 |
 
+## Fator de Acabamento — FA
+
+O FA deve ser obtido objetivamente pela soma da pontuação da tabela correspondente da Lei Complementar nº 20/2002. A ajuda da aplicação apresenta as faixas de enquadramento para residencial multifamiliar, residencial unifamiliar e comercial.
+
 ## Privacidade
 
-Não há envio de dados para servidor. O histórico utiliza `localStorage`. A autorização administrativa utiliza `sessionStorage`, permanecendo somente na aba atual até o encerramento ou até o prazo de expiração.
-
-
-## Ajuda objetiva do Fator de Acabamento — FA
-
-A versão 2.8.0 esclarece que o FA deve ser obtido pela soma da pontuação da tabela correspondente da Lei Complementar nº 20/2002. A ajuda apresenta as faixas de enquadramento para residencial multifamiliar, residencial unifamiliar e comercial, e recomenda registrar a pontuação no demonstrativo administrativo.
+Os dados do cálculo não são enviados a servidor próprio. O histórico utiliza `localStorage`, e a autorização administrativa utiliza `sessionStorage` na aba atual.

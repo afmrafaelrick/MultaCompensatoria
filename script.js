@@ -7,11 +7,11 @@
     decretoUfm: 'Decreto nº 13.857, de 13 de novembro de 2025',
     leiMulta: 'Lei Complementar nº 429/2023',
     leiFatores: 'Lei Complementar nº 20/2002',
-    versao: '2.8.0',
+    versao: '2.9.0',
     arquivoZonas: './zonasfiscais.txt',
     areaPorVaga: 15,
-    historyStorageKey: 'multaCompensatoriaHistoricoV28',
-    adminPasswordHash: '2126c89fa86bf4bafe424a094b1fc308b614819c3052e15127d8e1aead9c4890',
+    historyStorageKey: 'multaCompensatoriaHistoricoV29',
+    adminPasswordHash: 'cfb98e79c4348da44370356bec67a01fdc8865ef53642168e6a1db5dfe034891',
     adminSessionMinutes: 60,
     adminMaxAttempts: 5,
     adminLockMinutes: 10,
@@ -410,7 +410,7 @@
 
     $$('.help-button').forEach(button => button.addEventListener('click', () => openHelp(button.dataset.help)));
     $('#limpar').addEventListener('click', clearForm);
-    $('#imprimir').addEventListener('click', printResult);
+    $('#imprimir').addEventListener('click', () => { void generatePdfResult(); });
     $('#editar-calculo').addEventListener('click', () => $('#etapa-imovel').scrollIntoView({ behavior: 'smooth', block: 'start' }));
 
     ['processo', 'interessado', 'responsavel', 'unidade', 'observacoes', 'data-calculo'].forEach(id => {
@@ -952,7 +952,6 @@
     const result = calculateResult();
     state.lastResult = result;
     renderResult(result);
-    buildPrintDocument(result);
     saveHistory(result);
     $('#resultado').hidden = false;
     $('#resultado').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1141,13 +1140,429 @@
     return `VMC = Σ[BMC × área da irregularidade × fator da infração] = ${terms} = ${partials} = ${formatCurrency(result.total)}`;
   }
 
-  function printResult() {
+  const PDF_THEME = Object.freeze({
+    navy: [35, 45, 90],
+    navySoft: [52, 67, 123],
+    yellow: [255, 208, 0],
+    yellowSoft: [255, 249, 214],
+    text: [38, 49, 69],
+    muted: [96, 108, 131],
+    line: [207, 214, 231],
+    soft: [245, 247, 253],
+    white: [255, 255, 255]
+  });
+
+  let pdfLogoPromise = null;
+
+  async function generatePdfResult() {
     if (!state.lastResult) {
-      showError('Calcule o valor antes de imprimir.');
+      showError('Calcule o valor antes de gerar o PDF.');
       return;
     }
-    buildPrintDocument(state.lastResult);
-    window.print();
+
+    if (state.lastResult.mode === 'administrativo' && !hasValidAdminSession()) {
+      showError('A sessão administrativa expirou. Informe novamente a senha antes de gerar o demonstrativo administrativo.');
+      return;
+    }
+
+    const button = $('#imprimir');
+    const originalLabel = button.textContent;
+    button.disabled = true;
+    button.setAttribute('aria-busy', 'true');
+    button.textContent = 'Gerando PDF…';
+    hideError();
+
+    try {
+      const JsPdf = window.jspdf?.jsPDF;
+      if (!JsPdf) throw new Error('Biblioteca jsPDF não carregada');
+
+      const doc = new JsPdf({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+        compress: true,
+        putOnlyUsedFonts: true
+      });
+
+      if (typeof doc.autoTable !== 'function') {
+        throw new Error('Plugin de tabelas do PDF não carregado');
+      }
+
+      doc.setProperties({
+        title: state.lastResult.mode === 'administrativo'
+          ? 'Demonstrativo de Cálculo da Multa Compensatória'
+          : 'Simulação de Multa Compensatória',
+        subject: CONFIG.leiMulta,
+        author: 'Município de Itajaí',
+        creator: `Calculadora de Multa Compensatória — versão ${CONFIG.versao}`
+      });
+
+      await buildPdfDocument(doc, state.lastResult);
+      doc.save(makePdfFilename(state.lastResult));
+    } catch (error) {
+      console.error('Falha ao gerar PDF:', error);
+      showError('Não foi possível gerar o PDF. Verifique a conexão com a internet, recarregue a página e tente novamente.');
+    } finally {
+      button.disabled = false;
+      button.removeAttribute('aria-busy');
+      button.textContent = originalLabel;
+    }
+  }
+
+  async function buildPdfDocument(doc, result) {
+    const margin = 14;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const contentWidth = pageWidth - margin * 2;
+    const administrative = result.mode === 'administrativo';
+    const logo = await getPdfLogoDataUrl();
+
+    let y = 12;
+
+    if (logo) {
+      doc.addImage(logo, 'PNG', margin, y, 50, 13.9, undefined, 'FAST');
+    } else {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(15);
+      doc.setTextColor(...PDF_THEME.navy);
+      doc.text('ITAJAÍ', margin, y + 8);
+    }
+
+    const badgeText = administrative ? 'DEMONSTRATIVO ADMINISTRATIVO' : 'SIMULAÇÃO ORIENTATIVA';
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.3);
+    const badgeWidth = doc.getTextWidth(pdfSafeText(badgeText)) + 8;
+    doc.setFillColor(...PDF_THEME.yellowSoft);
+    doc.setDrawColor(...PDF_THEME.yellow);
+    doc.roundedRect(pageWidth - margin - badgeWidth, y + 1, badgeWidth, 7, 1.5, 1.5, 'FD');
+    doc.setTextColor(...PDF_THEME.navy);
+    doc.text(pdfSafeText(badgeText), pageWidth - margin - badgeWidth + 4, y + 5.7);
+
+    y = 31;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.setTextColor(...PDF_THEME.navy);
+    doc.text('Demonstrativo de Cálculo da Multa Compensatória', margin, y);
+    y += 5.5;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(...PDF_THEME.muted);
+    doc.text(pdfSafeText(`${CONFIG.leiMulta} • UFM ${CONFIG.exercicio}: ${formatCurrency(CONFIG.ufm)}`), margin, y);
+    y += 5;
+    doc.setDrawColor(...PDF_THEME.yellow);
+    doc.setLineWidth(1.2);
+    doc.line(margin, y, pageWidth - margin, y);
+    y += 8;
+
+    y = addPdfSectionTitle(doc, '1. Identificação', y);
+    const identification = [
+      ['Natureza do documento', administrative ? 'Demonstrativo administrativo' : 'Simulação orientativa'],
+      ['Inscrição imobiliária', result.inscription],
+      ['Logradouro', result.location.street],
+      ['Bairro', result.location.district],
+      ['Zona fiscal', getZoneLabel(result.location)],
+      ['Fator de localização', `FL = ${formatFactor(result.location.factor)}`],
+      ['Data-base do cálculo', formatDate(result.calculationDate)],
+      ['Processo administrativo', administrative ? (result.process || 'Não informado') : 'Não aplicável'],
+      ['Interessado', administrative ? (result.interested || 'Não informado') : 'Não informado'],
+      ['Responsável/unidade', administrative ? [result.responsible, result.unit].filter(Boolean).join(' — ') || 'Não informado' : 'Não aplicável']
+    ];
+
+    const identificationRows = [];
+    for (let i = 0; i < identification.length; i += 2) {
+      const first = identification[i] || ['', ''];
+      const second = identification[i + 1] || ['', ''];
+      identificationRows.push([
+        pdfSafeText(first[0]), pdfSafeText(first[1]),
+        pdfSafeText(second[0]), pdfSafeText(second[1])
+      ]);
+    }
+
+    doc.autoTable({
+      startY: y,
+      body: identificationRows,
+      theme: 'grid',
+      margin: { left: margin, right: margin, top: 24, bottom: 18 },
+      styles: pdfTableBaseStyles(),
+      columnStyles: {
+        0: { fontStyle: 'bold', fillColor: PDF_THEME.soft, cellWidth: 32 },
+        1: { cellWidth: 59 },
+        2: { fontStyle: 'bold', fillColor: PDF_THEME.soft, cellWidth: 32 },
+        3: { cellWidth: 59 }
+      }
+    });
+    y = doc.lastAutoTable.finalY + 8;
+
+    y = ensurePdfSpace(doc, y, 30);
+    y = addPdfSectionTitle(doc, '2. Fatores utilizados', y);
+    const factorBody = ['fl', 'vmq', 'ft', 'fv', 'fs', 'fi', 'fa', 'fu'].map(key => {
+      const factor = result.factors[key];
+      return [
+        pdfSafeText(`${factor.name} — ${factor.code}`),
+        pdfSafeText(factor.label),
+        formatFactor(factor.value)
+      ];
+    });
+
+    doc.autoTable({
+      startY: y,
+      head: [['Fator', 'Critério selecionado', 'Multiplicador']],
+      body: factorBody,
+      theme: 'grid',
+      margin: { left: margin, right: margin, top: 24, bottom: 18 },
+      styles: pdfTableBaseStyles(),
+      headStyles: pdfTableHeadStyles(),
+      columnStyles: {
+        0: { cellWidth: 47 },
+        1: { cellWidth: 113 },
+        2: { cellWidth: 22, halign: 'right' }
+      }
+    });
+    y = doc.lastAutoTable.finalY + 8;
+
+    y = ensurePdfSpace(doc, y, 34);
+    y = addPdfSectionTitle(doc, '3. Irregularidades consideradas', y);
+    const irregularitiesBody = result.areas.map(entry => [
+      pdfSafeText(entry.shortTitle),
+      `${formatNumber(entry.area)} m²`,
+      formatPercent(entry.infractionFactor),
+      pdfSafeText(formatCurrency(entry.partialValue))
+    ]);
+
+    doc.autoTable({
+      startY: y,
+      head: [['Irregularidade', 'Área', 'Fator da infração', 'Valor parcial da multa']],
+      body: irregularitiesBody,
+      theme: 'grid',
+      margin: { left: margin, right: margin, top: 24, bottom: 18 },
+      styles: pdfTableBaseStyles(),
+      headStyles: pdfTableHeadStyles(),
+      columnStyles: {
+        0: { cellWidth: 84 },
+        1: { cellWidth: 27, halign: 'right' },
+        2: { cellWidth: 31, halign: 'right' },
+        3: { cellWidth: 40, halign: 'right', fontStyle: 'bold' }
+      }
+    });
+    y = doc.lastAutoTable.finalY + 8;
+
+    y = ensurePdfSpace(doc, y, 40);
+    y = addPdfSectionTitle(doc, '4. Síntese do cálculo', y);
+    doc.setFillColor(...PDF_THEME.soft);
+    doc.setDrawColor(...PDF_THEME.navy);
+    doc.setLineWidth(0.45);
+    doc.roundedRect(margin, y, contentWidth, 25, 2, 2, 'FD');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(...PDF_THEME.muted);
+    doc.text('VALOR DA MULTA COMPENSATÓRIA', margin + 6, y + 7);
+    doc.setFontSize(19);
+    doc.setTextColor(...PDF_THEME.navy);
+    doc.text(pdfSafeText(formatCurrency(result.total)), margin + 6, y + 18);
+    y += 32;
+
+    y = ensurePdfSpace(doc, y, 32);
+    y = addPdfSectionTitle(doc, '5. Memória matemática', y);
+    y = addPdfFormulaBlock(doc, 'Base da Multa Compensatória — BMC', makeBmcFormula(result), y, contentWidth);
+    y += 3;
+    y = ensurePdfSpace(doc, y, 22);
+    y = addPdfFormulaBlock(doc, 'Valor da Multa Compensatória — VMC', makeVmcFormula(result), y, contentWidth);
+    y += 7;
+
+    if (result.observations) {
+      const observationLines = doc.splitTextToSize(pdfSafeText(result.observations), contentWidth - 8);
+      y = ensurePdfSpace(doc, y, 15 + observationLines.length * 4);
+      y = addPdfSectionTitle(doc, '6. Observações', y);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.3);
+      doc.setTextColor(...PDF_THEME.text);
+      doc.text(observationLines, margin, y);
+      y += observationLines.length * 4 + 7;
+    }
+
+    const notesTitle = result.observations ? '7. Notas e referências' : '6. Notas e referências';
+    const natureNote = administrative
+      ? 'Este demonstrativo registra os parâmetros utilizados no cálculo administrativo e deve ser interpretado em conjunto com os documentos e decisões constantes do processo.'
+      : 'Este documento apresenta uma simulação orientativa. Não constitui lançamento, cobrança, decisão administrativa ou reconhecimento definitivo dos parâmetros informados.';
+    const notes = [
+      natureNote,
+      `A UFM utilizada é de ${formatCurrency(CONFIG.ufm)}, vigente para o exercício de ${CONFIG.exercicio}, conforme ${CONFIG.decretoUfm}.`,
+      `Os fatores de avaliação têm referência nos parâmetros cadastrais e tributários da ${CONFIG.leiFatores}. A fórmula e os fatores de infração seguem a ${CONFIG.leiMulta}.`
+    ];
+
+    const noteLineCount = notes.reduce((sum, note) => sum + doc.splitTextToSize(pdfSafeText(note), contentWidth).length, 0);
+    y = ensurePdfSpace(doc, y, 12 + noteLineCount * 3.7);
+    y = addPdfSectionTitle(doc, notesTitle, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.8);
+    doc.setTextColor(...PDF_THEME.text);
+    notes.forEach(note => {
+      const lines = doc.splitTextToSize(pdfSafeText(note), contentWidth);
+      doc.text(lines, margin, y);
+      y += lines.length * 3.7 + 2.2;
+    });
+
+    addPdfPageHeadersAndFooters(doc, result, logo, pageHeight, pageWidth, margin);
+  }
+
+  function pdfTableBaseStyles() {
+    return {
+      font: 'helvetica',
+      fontSize: 7.6,
+      cellPadding: 2.1,
+      lineColor: PDF_THEME.line,
+      lineWidth: 0.18,
+      textColor: PDF_THEME.text,
+      valign: 'middle',
+      overflow: 'linebreak'
+    };
+  }
+
+  function pdfTableHeadStyles() {
+    return {
+      fillColor: PDF_THEME.navy,
+      textColor: PDF_THEME.white,
+      fontStyle: 'bold',
+      halign: 'left',
+      fontSize: 7.5
+    };
+  }
+
+  function addPdfSectionTitle(doc, title, y) {
+    doc.setFillColor(...PDF_THEME.yellow);
+    doc.roundedRect(14, y - 3.8, 3, 5.2, 0.7, 0.7, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(...PDF_THEME.navy);
+    doc.text(pdfSafeText(title), 20, y);
+    return y + 5;
+  }
+
+  function addPdfFormulaBlock(doc, label, formula, y, contentWidth) {
+    const safeFormula = pdfSafeText(formula);
+    const lines = doc.splitTextToSize(safeFormula, contentWidth - 8);
+    const height = 10 + lines.length * 3.7;
+    y = ensurePdfSpace(doc, y, height);
+    doc.setFillColor(...PDF_THEME.soft);
+    doc.setDrawColor(...PDF_THEME.line);
+    doc.roundedRect(14, y, contentWidth, height, 1.5, 1.5, 'FD');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.6);
+    doc.setTextColor(...PDF_THEME.navy);
+    doc.text(pdfSafeText(label), 18, y + 5);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.2);
+    doc.setTextColor(...PDF_THEME.text);
+    doc.text(lines, 18, y + 10);
+    return y + height;
+  }
+
+  function ensurePdfSpace(doc, y, requiredHeight) {
+    const maxY = doc.internal.pageSize.getHeight() - 20;
+    if (y + requiredHeight <= maxY) return y;
+    doc.addPage();
+    return 25;
+  }
+
+  function addPdfPageHeadersAndFooters(doc, result, logo, pageHeight, pageWidth, margin) {
+    const pageCount = doc.getNumberOfPages();
+    const emission = formatDateTime(result.generatedAt);
+
+    for (let page = 1; page <= pageCount; page += 1) {
+      doc.setPage(page);
+
+      if (page > 1) {
+        if (logo) {
+          doc.addImage(logo, 'PNG', margin, 7, 31, 8.6, undefined, 'FAST');
+        } else {
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(9);
+          doc.setTextColor(...PDF_THEME.navy);
+          doc.text('ITAJAÍ', margin, 12);
+        }
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.2);
+        doc.setTextColor(...PDF_THEME.navy);
+        doc.text('Cálculo da Multa Compensatória', pageWidth - margin, 11.5, { align: 'right' });
+        doc.setDrawColor(...PDF_THEME.yellow);
+        doc.setLineWidth(0.65);
+        doc.line(margin, 18, pageWidth - margin, 18);
+      }
+
+      doc.setDrawColor(...PDF_THEME.line);
+      doc.setLineWidth(0.2);
+      doc.line(margin, pageHeight - 13, pageWidth - margin, pageHeight - 13);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(6.8);
+      doc.setTextColor(...PDF_THEME.muted);
+      doc.text(`Calculadora de Multa Compensatória — v${CONFIG.versao}`, margin, pageHeight - 8.2);
+      doc.text(`Emitido em ${pdfSafeText(emission)}`, pageWidth / 2, pageHeight - 8.2, { align: 'center' });
+      doc.text(`Página ${page} de ${pageCount}`, pageWidth - margin, pageHeight - 8.2, { align: 'right' });
+    }
+  }
+
+  async function getPdfLogoDataUrl() {
+    if (pdfLogoPromise) return pdfLogoPromise;
+
+    pdfLogoPromise = (async () => {
+      try {
+        const response = await fetch('./identidade-itajai.svg', { cache: 'force-cache' });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const svgText = await response.text();
+        const blob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
+        const objectUrl = URL.createObjectURL(blob);
+
+        try {
+          const image = await loadImage(objectUrl);
+          const width = 1400;
+          const ratio = image.naturalHeight / image.naturalWidth;
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = Math.max(1, Math.round(width * ratio));
+          const context = canvas.getContext('2d');
+          if (!context) throw new Error('Canvas indisponível');
+          context.clearRect(0, 0, canvas.width, canvas.height);
+          context.drawImage(image, 0, 0, canvas.width, canvas.height);
+          return canvas.toDataURL('image/png');
+        } finally {
+          URL.revokeObjectURL(objectUrl);
+        }
+      } catch (error) {
+        console.warn('Não foi possível incorporar a marca ao PDF:', error);
+        return null;
+      }
+    })();
+
+    return pdfLogoPromise;
+  }
+
+  function loadImage(source) {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error('Falha ao carregar imagem'));
+      image.src = source;
+    });
+  }
+
+  function pdfSafeText(value) {
+    return String(value ?? '')
+      .replace(/\u00a0/g, ' ')
+      .replace(/[–—]/g, '-')
+      .replace(/[“”]/g, '"')
+      .replace(/[‘’]/g, "'")
+      .replace(/≥/g, '>=')
+      .replace(/≤/g, '<=')
+      .replace(/Σ/g, 'Soma')
+      .replace(/•/g, '-')
+      .replace(/…/g, '...');
+  }
+
+  function makePdfFilename(result) {
+    const inscription = result.inscription.replace(/\D/g, '') || 'imovel';
+    const nature = result.mode === 'administrativo' ? 'demonstrativo' : 'simulacao';
+    const date = result.calculationDate || toIsoDate(new Date());
+    return `multa-compensatoria_${nature}_${inscription}_${date}.pdf`;
   }
 
   function clearForm() {

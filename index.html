@@ -37,7 +37,7 @@
       <div class="header-meta">
         <span class="status-chip">UFM 2026: <strong>R$ 252,59</strong></span>
         <span class="status-chip">LC nº 429/2023</span>
-        <span class="version-chip">v2.8.0</span>
+        <span class="version-chip">v2.9.0</span>
       </div>
     </div>
   </header>
@@ -373,7 +373,7 @@
           <span id="resultado-subtitulo">Cálculo realizado com a UFM de 2026.</span>
         </div>
         <div class="result-actions">
-          <button id="imprimir" class="button primary" type="button">Imprimir / salvar PDF</button>
+          <button id="imprimir" class="button primary" type="button">Gerar PDF</button>
           <button id="editar-calculo" class="button secondary" type="button">Voltar ao formulário</button>
         </div>
       </div>
@@ -429,7 +429,7 @@
 
     <footer class="app-footer no-print">
       <p><strong>Referências:</strong> Lei Complementar nº 429/2023; Lei Complementar nº 20/2002; Decreto nº 13.857/2025.</p>
-      <p>Versão 2.8.0 — parâmetros de 2026.</p>
+      <p>Versão 2.9.0 — parâmetros de 2026.</p>
     </footer>
   </main>
 
@@ -494,7 +494,7 @@
     </section>
 
     <footer class="print-footer">
-      <span>Calculadora de Multa Compensatória — versão 2.8.0</span>
+      <span>Calculadora de Multa Compensatória — versão 2.9.0</span>
       <span id="print-emissao">Emitido em —</span>
     </footer>
   </section>
@@ -540,6 +540,8 @@
     </form>
   </dialog>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/3.0.3/jspdf.umd.min.js" defer crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/5.0.2/jspdf.plugin.autotable.min.js" defer crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="script.js" defer></script>
 </body>
 </html>

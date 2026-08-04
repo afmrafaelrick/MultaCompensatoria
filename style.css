@@ -1416,3 +1416,11 @@ th {
   background: var(--brand-soft, #f3f5fb);
   color: var(--brand-text, #263145) !important;
 }
+
+/* Geração direta de PDF */
+.button[aria-busy="true"],
+.button:disabled {
+  cursor: wait;
+  opacity: .72;
+  transform: none;
+}
